@@ -1,3 +1,4 @@
+
 package com.droidevs.safety_gear_tracker.auth.controller;
 
 
@@ -13,13 +14,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name= "Authentication")
 public class AuthenticationController {
@@ -29,16 +29,16 @@ public class AuthenticationController {
 
 
     @GetMapping("is_authenticated")
-    public ResponseEntity<Boolean> isAuthenticated(@AuthenticationPrincipal UserDetails userDetails){
-        return ResponseEntity.ok(userDetails != null);
+    public ResponseEntity<Boolean> isAuthenticated(@AuthenticationPrincipal String email){
+        return ResponseEntity.ok(email != null);
     }
 
     @GetMapping("is_verified")
-    public ResponseEntity<Boolean> isVerified(@AuthenticationPrincipal UserDetails userDetails){
-        if (userDetails == null || userDetails.getUsername() == null){
+    public ResponseEntity<Boolean> isVerified(@AuthenticationPrincipal String email){
+        if (email == null){
             throw new UserNotFoundException();
         }
-        return ResponseEntity.ok(service.isUserVerified(userDetails.getUsername()));
+        return ResponseEntity.ok(service.isUserVerified(email));
     }
 
     @PostMapping("/register")
@@ -68,36 +68,36 @@ public class AuthenticationController {
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendVerifyOtp(
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal String email
     ) throws MessagingException {
-        if (userDetails == null || userDetails.getUsername() == null) {
+        if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
-        service.sendOtp(userDetails.getUsername());
+        service.sendOtp(email);
         return ResponseEntity.ok("Verification code sent");
     }
     
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyUser(
             @RequestBody @Valid EmailVerificationRequest verifyUserRequest,
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal String email
     ) throws MessagingException {
-        if (userDetails == null || userDetails.getUsername() == null) {
+        if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
-        service.verifyUser(userDetails.getUsername(), verifyUserRequest.getOtp());
+        service.verifyUser(email, verifyUserRequest.getOtp());
         return ResponseEntity.ok("Account verified successfully");
     }
     
     @PostMapping("/validate-daily-code")
     public ResponseEntity<?> validateDailyCode(
             @RequestBody @Valid DailyCodeValidationRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal String email
     ) {
-        if (userDetails == null || userDetails.getUsername() == null) {
+        if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
-        dailyCodeService.validateCode(userDetails.getUsername(), request.getCode());
+        dailyCodeService.validateCode(email, request.getCode());
         return ResponseEntity.ok("Daily code validated successfully.");
     }
 
@@ -112,9 +112,10 @@ public class AuthenticationController {
 
     @PostMapping("/reset-password")
     public void resetPassword(
-            @RequestBody @Valid ResetPasswordRequest request
+            @RequestBody @Valid ResetPasswordRequest request,
+            @AuthenticationPrincipal String email
     ){
-        service.resetPassword(request);
+        service.resetPassword(request, email);
     }
 
     @PostMapping("/reset-password-otp")

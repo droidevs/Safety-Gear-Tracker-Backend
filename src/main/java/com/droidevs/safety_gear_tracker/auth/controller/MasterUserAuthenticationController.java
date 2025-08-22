@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth/master")
+@RequestMapping("/api/v1/auth/master")
 @RequiredArgsConstructor
 @Tag(name= "Master Authentication")
 public class MasterUserAuthenticationController {

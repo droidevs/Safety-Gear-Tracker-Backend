@@ -1,3 +1,4 @@
+
 package com.droidevs.safety_gear_tracker.auth.service;
 
 import com.droidevs.safety_gear_tracker.auth.dtos.*;
@@ -16,8 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,8 +25,6 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -124,9 +121,7 @@ public class AuthenticationService {
         return user.isEnabled();
     }
     
-    public void resetPassword(ResetPasswordRequest request) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        var email = userDetails.getUsername();
+    public void resetPassword(ResetPasswordRequest request, String email) {
         if (email == null || email.isEmpty()){
             throw new UserNotFoundException();
         }

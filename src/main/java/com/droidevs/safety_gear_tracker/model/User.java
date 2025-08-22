@@ -52,6 +52,15 @@ public class User implements UserDetails {
     )
     private Set<Role> roles;
 
+    public User(String firstname, String lastname, String email, String password, boolean enabled, Set<Role> roles) {
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.email = email;
+        this.password = password;
+        this.enabled = enabled;
+        this.roles = roles;
+    }
+
     public String getFullName() {
         return firstname + " " + lastname;
     }

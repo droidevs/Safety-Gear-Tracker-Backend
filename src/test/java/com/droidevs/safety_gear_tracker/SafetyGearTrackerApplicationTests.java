@@ -1,10 +1,10 @@
-package com.example.demo;
+package com.droidevs.safety_gear_tracker;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DemoApplicationTests {
+class SafetyGearTrackerApplicationTests {
 
   @Test
   void contextLoads() {
