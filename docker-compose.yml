@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: your_database_name
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_storage:/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1
+    ports:
+      - "8181:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+
+  face-recognition:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: face-recognition
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    volumes:
+      - ./face_database:/app/face_database
+
+volumes:
+  postgres_data:
+  minio_storage:
