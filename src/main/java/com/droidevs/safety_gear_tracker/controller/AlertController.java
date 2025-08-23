@@ -2,7 +2,7 @@ package com.droidevs.safety_gear_tracker.controller;
 
 import com.droidevs.safety_gear_tracker.dto.AlertResponseDto;
 import com.droidevs.safety_gear_tracker.service.AlertService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -13,10 +13,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @RequestMapping("/api/alerts")
+@RequiredArgsConstructor
 public class AlertController {
 
-    @Autowired
-    private AlertService alertService;
+    private final AlertService alertService;
 
     @GetMapping
     public ResponseEntity<Page<AlertResponseDto>> getAllAlerts(@RequestParam(defaultValue = "0") int page,

@@ -4,7 +4,7 @@ import com.droidevs.safety_gear_tracker.dto.CameraRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
 import com.droidevs.safety_gear_tracker.service.CameraService;
 import com.droidevs.safety_gear_tracker.service.VideoProcessingService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,17 +15,11 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/cameras")
+@RequiredArgsConstructor
 public class CameraController {
 
     private final CameraService cameraService;
     private final VideoProcessingService videoProcessingService;
-
-    @Autowired
-    public CameraController(CameraService cameraService,
-                            VideoProcessingService videoProcessingService) {
-        this.cameraService = cameraService;
-        this.videoProcessingService = videoProcessingService;
-    }
 
     @GetMapping
     public ResponseEntity<List<CameraResponseDto>> getAllCameras() {

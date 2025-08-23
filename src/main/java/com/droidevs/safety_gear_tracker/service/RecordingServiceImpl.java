@@ -5,7 +5,7 @@ import com.droidevs.safety_gear_tracker.model.Recording;
 import com.droidevs.safety_gear_tracker.model.User;
 import com.droidevs.safety_gear_tracker.repository.CameraRepository;
 import com.droidevs.safety_gear_tracker.repository.RecordingRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
@@ -34,16 +34,12 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RecordingServiceImpl implements RecordingService {
 
-    @Autowired
-    private CameraRepository cameraRepository;
-
-    @Autowired
-    private S3Service s3Service;
-
-    @Autowired
-    private RecordingRepository recordingRepository;
+    private final CameraRepository cameraRepository;
+    private final S3Service s3Service;
+    private final RecordingRepository recordingRepository;
 
     @Value("${recording.duration.minutes:10}")
     private int recordingDurationMinutes;

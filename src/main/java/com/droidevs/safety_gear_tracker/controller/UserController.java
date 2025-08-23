@@ -1,3 +1,4 @@
+
 package com.droidevs.safety_gear_tracker.controller;
 
 import com.droidevs.safety_gear_tracker.auth.service.DailyCodeService;

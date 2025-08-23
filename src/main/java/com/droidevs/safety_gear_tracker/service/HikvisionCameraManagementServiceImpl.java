@@ -1,5 +1,6 @@
 package com.droidevs.safety_gear_tracker.service;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
@@ -12,7 +13,8 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 
 @Service
-public class HikvisionCameraManagementService implements CameraManagementService {
+@RequiredArgsConstructor
+public class HikvisionCameraManagementServiceImpl implements CameraManagementService {
 
     @Override
     public boolean changeCredentials(String ipAddress, int port, String oldUsername, String oldPassword, String newUsername, String newPassword) {

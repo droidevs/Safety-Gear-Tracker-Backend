@@ -2,7 +2,7 @@ package com.droidevs.safety_gear_tracker.controller;
 
 import com.droidevs.safety_gear_tracker.model.Recording;
 import com.droidevs.safety_gear_tracker.service.RecordingService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -13,10 +13,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @RequestMapping("/api/recordings")
+@RequiredArgsConstructor
 public class RecordingController {
 
-    @Autowired
-    private RecordingService recordingService;
+    private final RecordingService recordingService;
 
     @GetMapping
     public ResponseEntity<Page<Recording>> getAllRecordings(@RequestParam(defaultValue = "0") int page,

@@ -3,6 +3,7 @@ package com.droidevs.safety_gear_tracker.controller;
 import com.droidevs.safety_gear_tracker.dto.ZoneRequestDto;
 import com.droidevs.safety_gear_tracker.dto.ZoneResponseDto;
 import com.droidevs.safety_gear_tracker.service.ZoneService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,13 +12,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/zones")
+@RequiredArgsConstructor
 public class ZoneController {
 
     private final ZoneService zoneService;
-
-    public ZoneController(ZoneService zoneService) {
-        this.zoneService = zoneService;
-    }
 
     @PostMapping
     public ResponseEntity<ZoneResponseDto> createZone(@RequestBody ZoneRequestDto zoneRequestDto) {

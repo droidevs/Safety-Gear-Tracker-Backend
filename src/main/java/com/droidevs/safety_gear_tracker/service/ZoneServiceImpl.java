@@ -5,21 +5,18 @@ import com.droidevs.safety_gear_tracker.dto.ZoneResponseDto;
 import com.droidevs.safety_gear_tracker.mappers.ZoneMapper;
 import com.droidevs.safety_gear_tracker.model.Zone;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ZoneServiceImpl implements ZoneService {
 
     private final ZoneRepository zoneRepository;
     private final ZoneMapper zoneMapper;
-
-    public ZoneServiceImpl(ZoneRepository zoneRepository, ZoneMapper zoneMapper) {
-        this.zoneRepository = zoneRepository;
-        this.zoneMapper = zoneMapper;
-    }
 
     @Override
     public ZoneResponseDto createZone(ZoneRequestDto zoneRequestDto) {
