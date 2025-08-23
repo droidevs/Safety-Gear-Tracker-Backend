@@ -1,15 +1,4 @@
 package com.droidevs.safety_gear_tracker.auth.dtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class AuthenticationResponse {
-    private String token;
-    private long expiresIn;
+public record AuthenticationResponse(String token, long expiresIn) {
 }
