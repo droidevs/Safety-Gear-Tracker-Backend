@@ -1,6 +1,6 @@
-package com.droidevs.safety-gear-tracker.service;
+package com.droidevs.safety_gear_tracker.service;
 
-import com.droidevs.safety-gear-tracker.model.Camera;
+import com.droidevs.safety_gear_tracker.model.Camera;
 import reactor.core.publisher.Flux;
 
 public interface VideoProcessingService {

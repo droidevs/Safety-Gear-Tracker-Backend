@@ -116,7 +116,7 @@ public class VideoProcessor implements Runnable {
         }
 
         for (SafetyViolation violation : violations) {
-            String missingGearString = violation.getMissingGear().stream()
+            String missingGearString = violation.missingGear().stream()
                     .map(SafetyGearType::name)
                     .collect(Collectors.joining(", "));
 

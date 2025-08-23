@@ -33,19 +33,19 @@ public class CameraMapper {
 
     public Camera toEntity(CameraRequestDto cameraDto) {
         Camera camera = new Camera();
-        camera.setName(cameraDto.getName());
-        camera.setIpAddress(cameraDto.getIpAddress());
-        camera.setPort(cameraDto.getPort());
-        camera.setUsername(cameraDto.getUsername());
-        camera.setPassword(cameraDto.getPassword());
-        camera.setRtspUrl(cameraDto.getRtspUrl());
-        camera.setActive(cameraDto.isActive());
+        camera.setName(cameraDto.name());
+        camera.setIpAddress(cameraDto.ipAddress());
+        camera.setPort(cameraDto.port());
+        camera.setUsername(cameraDto.username());
+        camera.setPassword(cameraDto.password());
+        camera.setRtspUrl(cameraDto.rtspUrl());
+        camera.setActive(cameraDto.active());
         camera.setRecordingActive(cameraDto.isRecordingActive());
-        camera.setRequiredSafetyGear(cameraDto.getRequiredSafetyGear());
+        camera.setRequiredSafetyGear(cameraDto.requiredSafetyGear());
 
-        if (cameraDto.getZoneId() != null) {
-            Zone zone = zoneRepository.findById(cameraDto.getZoneId())
-                    .orElseThrow(() -> new RuntimeException("Zone not found with id: " + cameraDto.getZoneId()));
+        if (cameraDto.zoneId() != null) {
+            Zone zone = zoneRepository.findById(cameraDto.zoneId())
+                    .orElseThrow(() -> new RuntimeException("Zone not found with id: " + cameraDto.zoneId()));
             camera.setZone(zone);
         }
 

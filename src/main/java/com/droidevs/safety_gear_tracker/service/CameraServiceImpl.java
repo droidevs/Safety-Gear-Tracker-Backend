@@ -67,36 +67,36 @@ public class CameraServiceImpl implements CameraService {
         if (existingCameraOptional.isPresent()) {
             Camera cameraToUpdate = existingCameraOptional.get();
 
-            if (!cameraToUpdate.getUsername().equals(updatedCameraDto.getUsername()) ||
-                !cameraToUpdate.getPassword().equals(updatedCameraDto.getPassword())) {
+            if (!cameraToUpdate.getUsername().equals(updatedCameraDto.username()) ||
+                !cameraToUpdate.getPassword().equals(updatedCameraDto.password())) {
                 boolean credentialsChanged = cameraManagementService.changeCredentials(
                         cameraToUpdate.getIpAddress(), cameraToUpdate.getPort(),
                         cameraToUpdate.getUsername(), cameraToUpdate.getPassword(),
-                        updatedCameraDto.getUsername(), updatedCameraDto.getPassword());
+                        updatedCameraDto.username(), updatedCameraDto.password());
 
                 if (!credentialsChanged) {
                     throw new RuntimeException("Failed to update camera credentials on the device.");
                 }
             }
 
-            cameraToUpdate.setName(updatedCameraDto.getName());
-            cameraToUpdate.setIpAddress(updatedCameraDto.getIpAddress());
-            cameraToUpdate.setPort(updatedCameraDto.getPort());
-            cameraToUpdate.setUsername(updatedCameraDto.getUsername());
-            cameraToUpdate.setPassword(updatedCameraDto.getPassword());
-            cameraToUpdate.setRtspUrl(updatedCameraDto.getRtspUrl());
-            cameraToUpdate.setRequiredSafetyGear(updatedCameraDto.getRequiredSafetyGear());
+            cameraToUpdate.setName(updatedCameraDto.name());
+            cameraToUpdate.setIpAddress(updatedCameraDto.ipAddress());
+            cameraToUpdate.setPort(updatedCameraDto.port());
+            cameraToUpdate.setUsername(updatedCameraDto.username());
+            cameraToUpdate.setPassword(updatedCameraDto.password());
+            cameraToUpdate.setRtspUrl(updatedCameraDto.rtspUrl());
+            cameraToUpdate.setRequiredSafetyGear(updatedCameraDto.requiredSafetyGear());
 
-            if (updatedCameraDto.getZoneId() != null) {
-                Zone zone = zoneRepository.findById(updatedCameraDto.getZoneId())
-                        .orElseThrow(() -> new RuntimeException("Zone not found with id: " + updatedCameraDto.getZoneId()));
+            if (updatedCameraDto.zoneId() != null) {
+                Zone zone = zoneRepository.findById(updatedCameraDto.zoneId())
+                        .orElseThrow(() -> new RuntimeException("Zone not found with id: " + updatedCameraDto.zoneId()));
                 cameraToUpdate.setZone(zone);
             } else {
                 cameraToUpdate.setZone(null);
             }
 
             boolean wasActive = cameraToUpdate.isActive();
-            cameraToUpdate.setActive(updatedCameraDto.isActive());
+            cameraToUpdate.setActive(updatedCameraDto.active());
             if (wasActive && !cameraToUpdate.isActive()) {
                 videoProcessingService.stopProcessing(cameraToUpdate.getId());
             } else if (!wasActive && cameraToUpdate.isActive()) {

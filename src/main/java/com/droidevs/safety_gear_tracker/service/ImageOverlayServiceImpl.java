@@ -23,15 +23,15 @@ public class ImageOverlayServiceImpl implements ImageOverlayService {
         for (SafetyViolation violation : violations) {
             // Draw a red bounding box around the person
             Rect box = new Rect(
-                violation.getPersonBoundingBox().getX(),
-                violation.getPersonBoundingBox().getY(),
-                violation.getPersonBoundingBox().getWidth(),
-                violation.getPersonBoundingBox().getHeight()
+                violation.personBoundingBox().x(),
+                violation.personBoundingBox().y(),
+                violation.personBoundingBox().width(),
+                violation.personBoundingBox().height()
             );
             Imgproc.rectangle(image, box, new Scalar(0, 0, 255), 2); // Red color, thickness 2
 
             // Create a label with the missing gear
-            String label = "Missing: " + violation.getMissingGear().stream()
+            String label = "Missing: " + violation.missingGear().stream()
                 .map(Enum::name)
                 .collect(Collectors.joining(", "));
 

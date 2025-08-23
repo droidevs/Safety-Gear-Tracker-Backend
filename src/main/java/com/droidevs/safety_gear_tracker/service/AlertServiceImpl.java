@@ -43,15 +43,15 @@ public class AlertServiceImpl implements AlertService {
     @Transactional
     public AlertResponseDto createAlert(AlertRequestDto alertRequestDto) throws IOException {
         Alert alert = new Alert();
-        alert.setCameraName(alertRequestDto.getCameraName());
-        alert.setDescription(alertRequestDto.getDescription());
+        alert.setCameraName(alertRequestDto.cameraName());
+        alert.setDescription(alertRequestDto.description());
         alert.setTimestamp(LocalDateTime.now());
 
-        String screenshotKey = "screenshots/" + UUID.randomUUID() + "-" + alertRequestDto.getScreenshot().getOriginalFilename();
-        s3Service.uploadFile(screenshotKey, alertRequestDto.getScreenshot().getInputStream());
+        String screenshotKey = "screenshots/" + UUID.randomUUID() + "-" + alertRequestDto.screenshot().getOriginalFilename();
+        s3Service.uploadFile(screenshotKey, alertRequestDto.screenshot().getInputStream());
         alert.setScreenshotUrl(screenshotKey);
 
-        Optional<Camera> cameraOptional = cameraRepository.findByName(alertRequestDto.getCameraName());
+        Optional<Camera> cameraOptional = cameraRepository.findByName(alertRequestDto.cameraName());
         if (cameraOptional.isPresent()) {
             Camera camera = cameraOptional.get();
             Optional<Recording> recordingOptional = recordingRepository.findLastRecordingBeforeTimestamp(camera.getId(), alert.getTimestamp());
@@ -124,7 +124,7 @@ public class AlertServiceImpl implements AlertService {
                     ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(recording.getFilePath());
                     return new InputStreamResource(s3Object);
                 } catch (Exception e) {
-                    System.err.println("Error streaming alert recording from S3: " .getMessage());
+                    System.err.println("Error streaming alert recording from S3: " + e.getMessage());
                     e.printStackTrace();
                     return null;
                 }

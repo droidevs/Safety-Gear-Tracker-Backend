@@ -18,31 +18,31 @@ public class UserMapper {
 
     public UserProfileDto toUserProfileDto(User user) {
         Optional<DailyCode> latestCode = dailyCodeRepository.findTopByUserOrderByCreatedAtDesc(user);
-        return UserProfileDto.builder()
-                .id(user.getId())
-                .firstname(user.getFirstname())
-                .lastname(user.getLastname())
-                .email(user.getEmail())
-                .enabled(user.isEnabled())
-                .locked(user.isAccountNonLocked())
-                .roles(user.getRoles())
-                .zones(user.getZones())
-                .currentDailyCode(latestCode.map(DailyCode::getCode).orElse("N/A"))
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .build();
+        return new UserProfileDto(
+                user.getId(),
+                user.getFirstname(),
+                user.getLastname(),
+                user.getEmail(),
+                user.isEnabled(),
+                user.isAccountNonLocked(),
+                user.getRoles(),
+                user.getZones(),
+                latestCode.map(DailyCode::getCode).orElse("N/A"),
+                user.getProfilePictureUrl()
+        );
     }
 
     public UserSelfProfileDto toUserSelfProfileDto(User user) {
-        return UserSelfProfileDto.builder()
-                .id(user.getId())
-                .firstname(user.getFirstname())
-                .lastname(user.getLastname())
-                .email(user.getEmail())
-                .enabled(user.isEnabled())
-                .locked(user.isAccountNonLocked())
-                .roles(user.getRoles())
-                .zones(user.getZones())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .build();
+        return new UserSelfProfileDto(
+                user.getId(),
+                user.getFirstname(),
+                user.getLastname(),
+                user.getEmail(),
+                user.isEnabled(),
+                user.isAccountNonLocked(),
+                user.getRoles(),
+                user.getZones(),
+                user.getProfilePictureUrl()
+        );
     }
 }

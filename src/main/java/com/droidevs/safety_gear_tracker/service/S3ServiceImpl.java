@@ -59,7 +59,7 @@ public class S3ServiceImpl implements S3Service {
                 .bucket(bucketName)
                 .key(key)
                 .build();
-        return s3Client.getObject(getRequest);
+        return s3Client.getObject(getObjectRequest);
     }
 
     @Override

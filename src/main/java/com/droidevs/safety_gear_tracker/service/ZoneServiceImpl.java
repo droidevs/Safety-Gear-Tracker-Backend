@@ -21,7 +21,7 @@ public class ZoneServiceImpl implements ZoneService {
     @Override
     public ZoneResponseDto createZone(ZoneRequestDto zoneRequestDto) {
         Zone zone = new Zone();
-        zone.setName(zoneRequestDto.getName());
+        zone.setName(zoneRequestDto.name());
         Zone savedZone = zoneRepository.save(zone);
         return zoneMapper.toDto(savedZone);
     }
@@ -44,7 +44,7 @@ public class ZoneServiceImpl implements ZoneService {
     public ZoneResponseDto updateZone(Long id, ZoneRequestDto zoneRequestDto) {
         Zone zone = zoneRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zone not found with id: " + id));
-        zone.setName(zoneRequestDto.getName());
+        zone.setName(zoneRequestDto.name());
         Zone updatedZone = zoneRepository.save(zone);
         return zoneMapper.toDto(updatedZone);
     }
