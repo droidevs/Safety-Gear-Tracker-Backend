@@ -22,6 +22,6 @@ public class MasterUserAuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticateMaster(@RequestBody @Valid AuthenticationRequest request) {
-        return ResponseEntity.ok(masterUserAuthenticationService.authenticateMaster(request));
+        return ResponseEntity.ok(masterUserAuthenticationService.authenticate(request));
     }
 }

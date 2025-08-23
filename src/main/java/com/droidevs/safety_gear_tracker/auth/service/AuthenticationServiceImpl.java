@@ -60,16 +60,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
-        if (userRepository.findByEmail(request.getEmail()).isPresent() || request.getEmail().equals(masterEmail)) {
+        if (userRepository.findByEmail(request.email()).isPresent() || request.email().equals(masterEmail)) {
             throw new UserAlreadyExistsException();
         }
 
         Role userRole = roleRepository.findByName("USER").orElseThrow(() -> new RuntimeException("USER role not found"));
         User user = User.builder()
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .firstname(request.firstname())
+                .lastname(request.lastname())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
                 .enabled(false)
                 .locked(false)
                 .roles(Set.of(userRole))
@@ -78,20 +78,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         sendVerificationEmail(user);
         
-        return AuthenticationResponse.builder().build();
+        return new AuthenticationResponse(null, 0);
     }
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        userRepository.findByEmail(request.getEmail())
+        userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         
-        if (request.getEmail().equals(masterEmail)) {
+        if (request.email().equals(masterEmail)) {
             throw new IllegalArgumentException("Master user cannot log in through this endpoint.");
         }
 
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
         User user = (User) auth.getPrincipal();
@@ -100,10 +100,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String jwtToken = jwtService.generateToken(claims, user);
 
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .expiresIn(jwtService.getJwtSecretInfo().getExpiration_time())
-                .build();
+        return new AuthenticationResponse(jwtToken, jwtService.getJwtSecretInfo().getExpiration_time());
     }
     
     @Override
@@ -150,8 +147,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
         
-        if (passwordEncoder.matches(request.getOldPassword(), user.getPassword())){
-            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        if (passwordEncoder.matches(request.oldPassword(), user.getPassword())){
+            user.setPassword(passwordEncoder.encode(request.newPassword()));
             if(email.equals(masterEmail)) {
                 user.setLastPasswordChange(LocalDateTime.now());
             }
@@ -163,14 +160,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     
     @Override
     public void resetPasswordOtp(ResetPasswordOtpRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(UserNotFoundException::new);
-        Otp savedOtp = otpRepository.findByUserAndOtp(user, request.getOtp()).orElseThrow(InvalidOtpException::new);
+        User user = userRepository.findByEmail(request.email()).orElseThrow(UserNotFoundException::new);
+        Otp savedOtp = otpRepository.findByUserAndOtp(user, request.otp()).orElseThrow(InvalidOtpException::new);
         
         if (LocalDateTime.now().isAfter(savedOtp.getExpiresAt())) {
             throw new OtpExpiredException();
         }
         
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
         savedOtp.setValidatedAt(LocalDateTime.now());
         otpRepository.save(savedOtp);

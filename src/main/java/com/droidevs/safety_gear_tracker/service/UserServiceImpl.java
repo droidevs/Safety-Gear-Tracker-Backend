@@ -80,15 +80,15 @@ public class UserServiceImpl implements UserService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if (request.getFirstname() != null && !request.getFirstname().isEmpty()) {
-            user.setFirstname(request.getFirstname());
+        if (request.firstname() != null && !request.firstname().isEmpty()) {
+            user.setFirstname(request.firstname());
         }
 
-        if (request.getLastname() != null && !request.getLastname().isEmpty()) {
-            user.setLastname(request.getLastname());
+        if (request.lastname() != null && !request.lastname().isEmpty()) {
+            user.setLastname(request.lastname());
         }
 
-        MultipartFile profilePicture = request.getProfilePicture();
+        MultipartFile profilePicture = request.profilePicture();
         if (profilePicture != null && !profilePicture.isEmpty()) {
             String profilePictureKey = "profile-pictures/" + user.getId() + "/" + UUID.randomUUID() + "-" + profilePicture.getOriginalFilename();
             s3Service.uploadFile(profilePictureKey, profilePicture.getInputStream());
@@ -112,7 +112,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void activateUser(String email) {
+    public void activateUser(_run_terminal_commandString email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setLocked(false);
         userRepository.save(user);

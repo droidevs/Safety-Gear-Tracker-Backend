@@ -53,7 +53,7 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request
     ){
         AuthenticationResponse response = service.authenticate(request);
-        ResponseCookie cookie = ResponseCookie.from("jwt", response.getToken())
+        ResponseCookie cookie = ResponseCookie.from("jwt", response.token())
                 .httpOnly(true)
                 .path("/")
                 .maxAge(Duration.ofDays(1))
@@ -85,7 +85,7 @@ public class AuthenticationController {
         if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
-        service.verifyUser(email, verifyUserRequest.getOtp());
+        service.verifyUser(email, verifyUserRequest.otp());
         return ResponseEntity.ok("Account verified successfully");
     }
     
@@ -97,7 +97,7 @@ public class AuthenticationController {
         if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
-        dailyCodeService.validateCode(email, request.getCode());
+        dailyCodeService.validateCode(email, request.code());
         return ResponseEntity.ok("Daily code validated successfully.");
     }
 

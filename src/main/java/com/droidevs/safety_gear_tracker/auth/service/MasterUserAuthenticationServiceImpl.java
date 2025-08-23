@@ -29,15 +29,15 @@ public class MasterUserAuthenticationServiceImpl implements MasterUserAuthentica
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        if (!request.getEmail().equals(masterEmail)) {
+        if (!request.email().equals(masterEmail)) {
             throw new IllegalArgumentException("Invalid credentials for master user.");
         }
         
-        userRepository.findByEmail(request.getEmail())
+        userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
         User user = (User) auth.getPrincipal();
@@ -46,9 +46,6 @@ public class MasterUserAuthenticationServiceImpl implements MasterUserAuthentica
         
         String jwtToken = jwtService.generateToken(claims, user);
 
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .expiresIn(jwtService.getJwtSecretInfo().getExpiration_time())
-                .build();
+        return new AuthenticationResponse(jwtToken, jwtService.getJwtSecretInfo().getExpiration_time());
     }
 }
