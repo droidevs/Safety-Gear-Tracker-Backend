@@ -1,18 +1,17 @@
 
 package com.droidevs.safety_gear_tracker.controller;
 
-import com.droidevs.safety_gear_tracker.auth.service.DailyCodeService;
-import com.droidevs.safety_gear_tracker.auth.token.DailyCode;
-import com.droidevs.safety_gear_tracker.dto.UpdateProfileRequestDto;
-import com.droidevs.safety_gear_tracker.dto.UserProfileDto;
-import com.droidevs.safety_gear_tracker.dto.UserSelfProfileDto;
+import com.droidevs.safety_gear_tracker.auth.service.WeeklyCodeService;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
+import com.droidevs.safety_gear_tracker.dto.*;
 import com.droidevs.safety_gear_tracker.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -21,7 +20,7 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
-    private final DailyCodeService dailyCodeService;
+    private final WeeklyCodeService weeklyCodeService;
 
     @PostMapping("/{email}/zones")
     public ResponseEntity<?> assignZonesToUser(@PathVariable String email, @RequestBody Set<Long> zoneIds) {
@@ -30,8 +29,9 @@ public class UserController {
     }
     
     @GetMapping
-    public ResponseEntity<List<UserProfileDto>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<UserPagingResponseDto> getAllUsers(UserPagingRequestDto request) {
+        Page<UserProfileDto> page = userService.getAllUsers(request);
+        return ResponseEntity.ok(new UserPagingResponseDto(page));
     }
     
     @GetMapping("/{email}")
@@ -73,9 +73,9 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
     
-    @GetMapping("/{email}/daily-codes")
-    public ResponseEntity<List<DailyCode>> getDailyCodesForUser(@PathVariable String email) {
-        return ResponseEntity.ok(dailyCodeService.getDailyCodesForUser(email));
+    @GetMapping("/{email}/latest-weekly-code")
+    public ResponseEntity<Optional<WeeklyCode>> getLatestWeeklyCodeForUser(@PathVariable String email) {
+        return ResponseEntity.ok(weeklyCodeService.getLatestWeeklyCodeForUser(email));
     }
     
     @PutMapping("/{email}/promote")

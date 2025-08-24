@@ -1,7 +1,7 @@
 package com.droidevs.safety_gear_tracker.auth.service;
 
-import com.droidevs.safety_gear_tracker.auth.token.DailyCode;
-import com.droidevs.safety_gear_tracker.auth.token.DailyCodeRepository;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCodeRepository;
 import com.droidevs.safety_gear_tracker.handler.exception.InvalidOtpException;
 import com.droidevs.safety_gear_tracker.handler.exception.OtpExpiredException;
 import com.droidevs.safety_gear_tracker.model.User;
@@ -14,41 +14,42 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class DailyCodeServiceImpl implements DailyCodeService {
+public class WeeklyCodeServiceImpl implements WeeklyCodeService {
 
     private final UserRepository userRepository;
-    private final DailyCodeRepository dailyCodeRepository;
+    private final WeeklyCodeRepository weeklyCodeRepository;
 
     @Value("${master.user.email}")
     private String masterEmail;
 
     @Override
-    @Scheduled(cron = "0 0 0 * * *") // Runs every day at midnight
-    public void generateDailyCodes() {
+    @Scheduled(cron = "0 0 0 * * MON") // Runs every Monday at midnight
+    public void generateWeeklyCodes() {
         List<User> users = userRepository.findAll().stream()
                 .filter(user -> !user.getEmail().equals(masterEmail))
                 .collect(Collectors.toList());
         for (User user : users) {
             String code = generateCode(6);
-            DailyCode dailyCode = DailyCode.builder()
+            WeeklyCode weeklyCode = WeeklyCode.builder()
                     .code(code)
                     .createdAt(LocalDateTime.now())
-                    .expiresAt(LocalDateTime.now().plusHours(24))
+                    .expiresAt(LocalDateTime.now().plusDays(7))
                     .user(user)
                     .build();
-            dailyCodeRepository.save(dailyCode);
+            weeklyCodeRepository.save(weeklyCode);
         }
     }
 
     @Override
     @Scheduled(cron = "0 0 * * * *") // Runs every hour
     public void checkExpiredCodesAndLockAccounts() {
-        List<DailyCode> codes = dailyCodeRepository.findAll();
-        for (DailyCode code : codes) {
+        List<WeeklyCode> codes = weeklyCodeRepository.findAll();
+        for (WeeklyCode code : codes) {
             if (code.getValidatedAt() == null && LocalDateTime.now().isAfter(code.getExpiresAt())) {
                 User user = code.getUser();
                 if (!user.getEmail().equals(masterEmail)) {
@@ -64,15 +65,15 @@ public class DailyCodeServiceImpl implements DailyCodeService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        DailyCode dailyCode = dailyCodeRepository.findByUserAndCode(user, code)
+        WeeklyCode weeklyCode = weeklyCodeRepository.findByUserAndCode(user, code)
                 .orElseThrow(InvalidOtpException::new);
 
-        if (LocalDateTime.now().isAfter(dailyCode.getExpiresAt())) {
+        if (LocalDateTime.now().isAfter(weeklyCode.getExpiresAt())) {
             throw new OtpExpiredException();
         }
 
-        dailyCode.setValidatedAt(LocalDateTime.now());
-        dailyCodeRepository.save(dailyCode);
+        weeklyCode.setValidatedAt(LocalDateTime.now());
+        weeklyCodeRepository.save(weeklyCode);
         
         user.setLocked(false);
         userRepository.save(user);
@@ -90,9 +91,9 @@ public class DailyCodeServiceImpl implements DailyCodeService {
     }
     
     @Override
-    public List<DailyCode> getDailyCodesForUser(String email) {
+    public Optional<WeeklyCode> getLatestWeeklyCodeForUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return dailyCodeRepository.findByUser(user);
+        return weeklyCodeRepository.findTopByUserOrderByCreatedAtDesc(user);
     }
 }

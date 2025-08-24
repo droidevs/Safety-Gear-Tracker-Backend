@@ -2,6 +2,7 @@
 package com.droidevs.safety_gear_tracker.service;
 
 import com.droidevs.safety_gear_tracker.dto.UpdateProfileRequestDto;
+import com.droidevs.safety_gear_tracker.dto.UserPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.UserProfileDto;
 import com.droidevs.safety_gear_tracker.dto.UserSelfProfileDto;
 import com.droidevs.safety_gear_tracker.mapper.UserMapper;
@@ -11,12 +12,16 @@ import com.droidevs.safety_gear_tracker.model.Zone;
 import com.droidevs.safety_gear_tracker.repository.RoleRepository;
 import com.droidevs.safety_gear_tracker.repository.UserRepository;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -50,15 +55,23 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toSet());
 
         user.setZones(zones);
+        user.updateZoneCount();
         userRepository.save(user);
     }
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public List<UserProfileDto> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(userMapper::toUserProfileDto)
-                .collect(Collectors.toList());
+    public Page<UserProfileDto> getAllUsers(UserPagingRequestDto request) {
+        Pageable pageable = request.toPageable();
+        Page<User> userPage;
+
+        if (request.getZoneId() != null) {
+            userPage = userRepository.findByZonesId(request.getZoneId(), pageable);
+        } else {
+            userPage = userRepository.findAll(pageable);
+        }
+
+        return userPage.map(userMapper::toUserProfileDto);
     }
     
     @Override
@@ -134,6 +147,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         Zone zone = zoneRepository.findById(zoneId).orElseThrow(() -> new RuntimeException("Zone not found"));
         user.getZones().remove(zone);
+        user.updateZoneCount();
         userRepository.save(user);
     }
     
@@ -144,5 +158,15 @@ public class UserServiceImpl implements UserService {
         Role masterRole = roleRepository.findByName("MASTER").orElseThrow(() -> new RuntimeException("MASTER role not found"));
         user.getRoles().add(masterRole);
         userRepository.save(user);
+    }
+
+    @PostConstruct
+    @Transactional
+    public void updateUserZoneCounts() {
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            user.updateZoneCount();
+        }
+        userRepository.saveAll(users);
     }
 }

@@ -1,9 +1,12 @@
+
 package com.droidevs.safety_gear_tracker.service;
 
 import com.droidevs.safety_gear_tracker.dto.ZoneRequestDto;
 import com.droidevs.safety_gear_tracker.dto.ZoneResponseDto;
 import com.droidevs.safety_gear_tracker.mappers.ZoneMapper;
+import com.droidevs.safety_gear_tracker.model.User;
 import com.droidevs.safety_gear_tracker.model.Zone;
+import com.droidevs.safety_gear_tracker.repository.UserRepository;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 public class ZoneServiceImpl implements ZoneService {
 
     private final ZoneRepository zoneRepository;
+    private final UserRepository userRepository;
     private final ZoneMapper zoneMapper;
 
     @Override
@@ -51,6 +55,16 @@ public class ZoneServiceImpl implements ZoneService {
 
     @Override
     public void deleteZone(Long id) {
+        Zone zone = zoneRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Zone not found with id: " + id));
+
+        List<User> users = userRepository.findByZonesId(id, null).getContent();
+        for (User user : users) {
+            user.getZones().remove(zone);
+            user.updateZoneCount();
+            userRepository.save(user);
+        }
+
         zoneRepository.deleteById(id);
     }
 }

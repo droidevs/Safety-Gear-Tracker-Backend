@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface DailyCodeRepository extends JpaRepository<DailyCode, Long> {
-    Optional<DailyCode> findByUserAndCode(User user, String code);
-    List<DailyCode> findByUser(User user);
-    Optional<DailyCode> findTopByUserOrderByCreatedAtDesc(User user);
+public interface WeeklyCodeRepository extends JpaRepository<WeeklyCode, Long> {
+    Optional<WeeklyCode> findByUserAndCode(User user, String code);
+    List<WeeklyCode> findByUser(User user);
+    Optional<WeeklyCode> findTopByUserOrderByCreatedAtDesc(User user);
 }

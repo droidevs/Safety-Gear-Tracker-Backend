@@ -34,6 +34,7 @@ public class User implements UserDetails {
     private boolean locked;
     private LocalDateTime lastPasswordChange;
     private String profilePictureUrl;
+    private Integer zoneCount;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -63,6 +64,16 @@ public class User implements UserDetails {
 
     public String getFullName() {
         return firstname + " " + lastname;
+    }
+    
+    @PrePersist
+    @PreUpdate
+    public void updateZoneCount() {
+        if (zones == null) {
+            this.zoneCount = 0;
+        } else {
+            this.zoneCount = this.zones.size();
+        }
     }
 
     @Override
