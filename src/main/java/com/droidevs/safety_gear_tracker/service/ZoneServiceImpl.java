@@ -40,7 +40,7 @@ public class ZoneServiceImpl implements ZoneService {
             default -> Sort.unsorted();
         };
 
-        Pageable pageable = PageRequest.of(zonePagingRequestDto.getPage(), zonePagingRequestDto.getSize(), sort);
+        Pageable pageable = PageRequest.of(zonePagingRequestDto.getPageNumber(), zonePagingRequestDto.getPageSize(), sort);
         return zoneRepository.findAll(ZoneSpecification.search(zonePagingRequestDto.getSearch()), pageable)
                 .map(zoneMapper::toSummaryDto);
     }

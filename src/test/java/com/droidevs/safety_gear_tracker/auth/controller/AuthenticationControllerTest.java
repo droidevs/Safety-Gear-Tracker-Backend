@@ -3,7 +3,7 @@ package com.droidevs.safety_gear_tracker.auth.controller;
 
 import com.droidevs.safety_gear_tracker.auth.dtos.*;
 import com.droidevs.safety_gear_tracker.auth.service.AuthenticationService;
-import com.droidevs.safety_gear_tracker.auth.service.DailyCodeService;
+import com.droidevs.safety_gear_tracker.auth.service.WeeklyCodeService;
 import com.droidevs.safety_gear_tracker.model.Role;
 import com.droidevs.safety_gear_tracker.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +41,7 @@ class AuthenticationControllerTest {
     private AuthenticationService service;
 
     @MockBean
-    private DailyCodeService dailyCodeService;
+    private WeeklyCodeService weeklyCodeService;
 
     @MockBean
     private GenerativeModel generativeModel;
@@ -123,7 +123,7 @@ class AuthenticationControllerTest {
     @Test
     void validateDailyCode_shouldReturnOk_whenCodeIsValid() throws Exception {
         DailyCodeValidationRequest request = new DailyCodeValidationRequest("123456");
-        doNothing().when(dailyCodeService).validateCode(anyString(), anyString());
+        doNothing().when(weeklyCodeService).validateCode(anyString(), anyString());
 
         mockMvc.perform(post("/api/v1/auth/validate-daily-code")
                         .with(authentication(new UsernamePasswordAuthenticationToken(userEmail, null, user.getAuthorities())))

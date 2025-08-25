@@ -1,7 +1,7 @@
 package com.droidevs.safety_gear_tracker.mapper;
 
-import com.droidevs.safety_gear_tracker.auth.token.DailyCode;
-import com.droidevs.safety_gear_tracker.auth.token.DailyCodeRepository;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCodeRepository;
 import com.droidevs.safety_gear_tracker.dto.UserProfileDto;
 import com.droidevs.safety_gear_tracker.dto.UserSelfProfileDto;
 import com.droidevs.safety_gear_tracker.model.User;
@@ -14,10 +14,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserMapper {
 
-    private final DailyCodeRepository dailyCodeRepository;
+    private final WeeklyCodeRepository weeklyCodeRepository;
 
     public UserProfileDto toUserProfileDto(User user) {
-        Optional<DailyCode> latestCode = dailyCodeRepository.findTopByUserOrderByCreatedAtDesc(user);
+        Optional<WeeklyCode> latestCode = weeklyCodeRepository.findTopByUserOrderByCreatedAtDesc(user);
         return new UserProfileDto(
                 user.getId(),
                 user.getFirstname(),
@@ -27,7 +27,7 @@ public class UserMapper {
                 user.isAccountNonLocked(),
                 user.getRoles(),
                 user.getZones(),
-                latestCode.map(DailyCode::getCode).orElse("N/A"),
+                latestCode.map(WeeklyCode::getCode).orElse("N/A"),
                 user.getProfilePictureUrl()
         );
     }

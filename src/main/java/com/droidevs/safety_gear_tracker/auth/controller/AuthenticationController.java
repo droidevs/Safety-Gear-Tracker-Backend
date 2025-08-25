@@ -5,7 +5,7 @@ package com.droidevs.safety_gear_tracker.auth.controller;
 import com.droidevs.safety_gear_tracker.auth.dtos.*;
 import com.droidevs.safety_gear_tracker.handler.exception.UserNotFoundException;
 import com.droidevs.safety_gear_tracker.auth.service.AuthenticationService;
-import com.droidevs.safety_gear_tracker.auth.service.DailyCodeService;
+import com.droidevs.safety_gear_tracker.auth.service.WeeklyCodeService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -25,7 +25,7 @@ import java.time.Duration;
 public class AuthenticationController {
 
     private final AuthenticationService service;
-    private final DailyCodeService dailyCodeService;
+    private final WeeklyCodeService weeklyCodeService;
 
 
     @GetMapping("is_authenticated")
@@ -89,7 +89,7 @@ public class AuthenticationController {
         return ResponseEntity.ok("Account verified successfully");
     }
     
-    @PostMapping("/validate-daily-code")
+    @PostMapping("/validate-weekly-code")
     public ResponseEntity<?> validateDailyCode(
             @RequestBody @Valid DailyCodeValidationRequest request,
             @AuthenticationPrincipal String email
@@ -97,7 +97,7 @@ public class AuthenticationController {
         if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
-        dailyCodeService.validateCode(email, request.code());
+        weeklyCodeService.validateCode(email, request.code());
         return ResponseEntity.ok("Daily code validated successfully.");
     }
 

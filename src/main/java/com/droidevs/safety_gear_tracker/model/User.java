@@ -39,6 +39,7 @@ public class User implements UserDetails {
     private LocalDateTime lastPasswordChange;
     private String profilePictureUrl;
     private Integer zoneCount;
+    private boolean locked;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -109,7 +110,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return weeklyCodeVerified && otpVerified;
+        return !locked && weeklyCodeVerified && otpVerified;
     }
 
     @Override
