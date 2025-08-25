@@ -1,6 +1,5 @@
 package com.droidevs.safety_gear_tracker.auth.config;
 
-import com.droidevs.safety_gear_tracker.auth.service.JwtAuthServiceImpl;
 import com.droidevs.safety_gear_tracker.auth.service.UserDetailsServiceImpl;
 import com.droidevs.safety_gear_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,12 +40,6 @@ public class ApplicationConfig {
     ) throws Exception {
         return config.getAuthenticationManager();
     }
-
-    @Bean
-    public JwtAuthServiceImpl jwtService(){
-        return new JwtAuthServiceImpl(jwtSecretInfo());
-    }
-
 
     @Bean
     @ConfigurationProperties(prefix = "application.security.jwt")
