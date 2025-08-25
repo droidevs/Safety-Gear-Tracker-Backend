@@ -8,10 +8,11 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Entity
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "weekly_codes")
 public class WeeklyCode {
 
     @Id

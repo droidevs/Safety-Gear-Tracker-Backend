@@ -1,43 +1,52 @@
 package com.droidevs.safety_gear_tracker.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+
 import java.util.Set;
-import lombok.Data;
-import org.hibernate.annotations.Formula;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
-@Data
+@Table(name = "zones")
 public class Zone {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Zone name cannot be blank")
     private String name;
-    
+
     private String description;
 
-    @ManyToMany(mappedBy = "zones")
+    private Integer userCount;
+    private Integer cameraCount;
+
+    @ManyToMany(mappedBy = "zones", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<User> users;
-    
-    @OneToMany(mappedBy = "zone")
+
+    @OneToMany(mappedBy = "zone", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Camera> cameras;
 
-    @Formula("(select count(*) from user_zones uz where uz.zone_id = id)")
-    private int userCount;
-
-    @Formula("(select count(*) from cameras c where c.zone_id = id)")
-    private int cameraCount;
-    
-    public Zone() {
-    }
-
-    public Zone(String name) {
-        this.name = name;
+    @PrePersist
+    @PreUpdate
+    public void updateCounts() {
+        if (users == null) {
+            this.userCount = 0;
+        } else {
+            this.userCount = this.users.size();
+        }
+        if (cameras == null) {
+            this.cameraCount = 0;
+        } else {
+            this.cameraCount = this.cameras.size();
+        }
     }
 }

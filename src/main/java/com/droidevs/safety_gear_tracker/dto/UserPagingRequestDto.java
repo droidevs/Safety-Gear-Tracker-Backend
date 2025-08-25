@@ -1,4 +1,3 @@
-
 package com.droidevs.safety_gear_tracker.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,17 +10,23 @@ import org.springframework.data.domain.Sort;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class UserPagingRequestDto extends PagingRequestDto {
-    @JsonProperty("zone_id")
+
+    @JsonProperty("zone")
     private Long zoneId;
-    @JsonProperty("responsibility_sort")
-    private UserResponsibilitySort responsibilitySort;
+
+    @JsonProperty("sort_by")
+    private UserResponsibilitySort sortBy;
 
     @Override
     public Pageable toPageable() {
-        if (responsibilitySort != null) {
-            Sort.Direction direction = responsibilitySort == UserResponsibilitySort.MORE_RESPONSIBLE ? Sort.Direction.DESC : Sort.Direction.ASC;
-            return PageRequest.of(getPageNumber(), getPageSize(), Sort.by(direction, "zoneCount"));
+        if (sortBy != null) {
+            Sort sort = switch (sortBy) {
+                case MORE_RESPONSIBLE -> Sort.by("zoneCount").descending();
+                case LESS_RESPONSIBLE -> Sort.by("zoneCount").ascending();
+            };
+            return PageRequest.of(getPageNumber(), getPageSize(), sort);
+        } else {
+            return super.toPageable();
         }
-        return super.toPageable();
     }
 }

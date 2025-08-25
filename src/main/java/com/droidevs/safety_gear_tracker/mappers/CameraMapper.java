@@ -4,11 +4,9 @@ import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.model.Camera;
-import org.mapstruct.MappingTarget;
-
 
 public interface CameraMapper {
     Camera toEntity(AddCameraRequestDto dto);
     CameraResponseDto toDto(Camera camera);
-    void updateCameraFromDto(UpdateCameraRequestDto dto, @MappingTarget Camera camera);
+    void updateCameraFromDto(UpdateCameraRequestDto dto, Camera camera);
 }

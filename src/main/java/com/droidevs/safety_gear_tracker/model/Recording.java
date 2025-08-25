@@ -1,15 +1,17 @@
 package com.droidevs.safety_gear_tracker.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
+@Table(name = "recordings")
 public class Recording {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +21,7 @@ public class Recording {
     @JoinColumn(name = "camera_id")
     private Camera camera;
 
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private String filePath;
-    private LocalDateTime timestamp;
 }
