@@ -7,8 +7,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import java.util.Set;
+import lombok.Data;
+import org.hibernate.annotations.Formula;
 
 @Entity
+@Data
 public class Zone {
 
     @Id
@@ -16,6 +19,8 @@ public class Zone {
     private Long id;
 
     private String name;
+    
+    private String description;
 
     @ManyToMany(mappedBy = "zones")
     private Set<User> users;
@@ -23,30 +28,16 @@ public class Zone {
     @OneToMany(mappedBy = "zone")
     private Set<Camera> cameras;
 
+    @Formula("(select count(*) from user_zones uz where uz.zone_id = id)")
+    private int userCount;
+
+    @Formula("(select count(*) from cameras c where c.zone_id = id)")
+    private int cameraCount;
+    
     public Zone() {
     }
 
     public Zone(String name) {
         this.name = name;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-    
-    public Set<Camera> getCameras() {
-        return cameras;
     }
 }

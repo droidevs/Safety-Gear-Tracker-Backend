@@ -11,7 +11,7 @@ public record UserProfileDto(
         String lastname,
         String email,
         boolean enabled,
-        boolean locked,
+        boolean active,
         Set<Role> roles,
         Set<Zone> zones,
         String currentDailyCode,

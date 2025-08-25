@@ -1,14 +1,13 @@
 package com.droidevs.safety_gear_tracker.controller;
 
-import com.droidevs.safety_gear_tracker.dto.ZoneRequestDto;
-import com.droidevs.safety_gear_tracker.dto.ZoneResponseDto;
+import com.droidevs.safety_gear_tracker.dto.*;
 import com.droidevs.safety_gear_tracker.service.ZoneService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/zones")
@@ -18,26 +17,26 @@ public class ZoneController {
     private final ZoneService zoneService;
 
     @PostMapping
-    public ResponseEntity<ZoneResponseDto> createZone(@RequestBody ZoneRequestDto zoneRequestDto) {
-        ZoneResponseDto createdZone = zoneService.createZone(zoneRequestDto);
+    public ResponseEntity<ZoneDetailResponseDto> createZone(@Valid @RequestBody AddZoneRequestDto addZoneRequestDto) {
+        ZoneDetailResponseDto createdZone = zoneService.createZone(addZoneRequestDto);
         return new ResponseEntity<>(createdZone, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<List<ZoneResponseDto>> getAllZones() {
-        List<ZoneResponseDto> zones = zoneService.getAllZones();
-        return new ResponseEntity<>(zones, HttpStatus.OK);
+    public ResponseEntity<ZonePagingResponseDto> getAllZones(ZonePagingRequestDto zonePagingRequestDto) {
+        Page<ZoneSummaryResponseDto> zones = zoneService.getAllZones(zonePagingRequestDto);
+        return new ResponseEntity<>(new ZonePagingResponseDto(zones), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ZoneResponseDto> getZoneById(@PathVariable Long id) {
-        ZoneResponseDto zone = zoneService.getZoneById(id);
+    public ResponseEntity<ZoneDetailResponseDto> getZoneById(@PathVariable Long id) {
+        ZoneDetailResponseDto zone = zoneService.getZoneById(id);
         return new ResponseEntity<>(zone, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ZoneResponseDto> updateZone(@PathVariable Long id, @RequestBody ZoneRequestDto zoneRequestDto) {
-        ZoneResponseDto updatedZone = zoneService.updateZone(id, zoneRequestDto);
+    public ResponseEntity<ZoneDetailResponseDto> updateZone(@PathVariable Long id, @Valid @RequestBody UpdateZoneRequestDto updateZoneRequestDto) {
+        ZoneDetailResponseDto updatedZone = zoneService.updateZone(id, updateZoneRequestDto);
         return new ResponseEntity<>(updatedZone, HttpStatus.OK);
     }
 

@@ -1,19 +1,22 @@
 package com.droidevs.safety_gear_tracker.model;
 
+import com.droidevs.safety_gear_tracker.auth.token.Otp;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -31,10 +34,14 @@ public class User implements UserDetails {
     private String email;
     private String password;
     private boolean enabled;
-    private boolean locked;
+    private boolean weeklyCodeVerified;
+    private boolean otpVerified;
     private LocalDateTime lastPasswordChange;
     private String profilePictureUrl;
     private Integer zoneCount;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -45,13 +52,20 @@ public class User implements UserDetails {
     @JsonIgnore
     private Set<Zone> zones;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles;
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Otp> otps;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WeeklyCode> weeklyCodes;
+
 
     public User(String firstname, String lastname, String email, String password, boolean enabled, Set<Role> roles) {
         this.firstname = firstname;
@@ -95,7 +109,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !locked;
+        return weeklyCodeVerified && otpVerified;
     }
 
     @Override

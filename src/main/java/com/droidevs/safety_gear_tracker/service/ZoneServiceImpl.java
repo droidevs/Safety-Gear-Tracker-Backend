@@ -1,70 +1,69 @@
 
 package com.droidevs.safety_gear_tracker.service;
 
-import com.droidevs.safety_gear_tracker.dto.ZoneRequestDto;
-import com.droidevs.safety_gear_tracker.dto.ZoneResponseDto;
+import com.droidevs.safety_gear_tracker.dto.*;
+import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
 import com.droidevs.safety_gear_tracker.mappers.ZoneMapper;
-import com.droidevs.safety_gear_tracker.model.User;
 import com.droidevs.safety_gear_tracker.model.Zone;
-import com.droidevs.safety_gear_tracker.repository.UserRepository;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
+import com.droidevs.safety_gear_tracker.repository.ZoneSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ZoneServiceImpl implements ZoneService {
 
     private final ZoneRepository zoneRepository;
-    private final UserRepository userRepository;
     private final ZoneMapper zoneMapper;
 
     @Override
-    public ZoneResponseDto createZone(ZoneRequestDto zoneRequestDto) {
+    public ZoneDetailResponseDto createZone(AddZoneRequestDto addZoneRequestDto) {
         Zone zone = new Zone();
-        zone.setName(zoneRequestDto.name());
+        zone.setName(addZoneRequestDto.name());
+        zone.setDescription(addZoneRequestDto.description());
         Zone savedZone = zoneRepository.save(zone);
-        return zoneMapper.toDto(savedZone);
+        return zoneMapper.toDetailDto(savedZone);
     }
 
     @Override
-    public List<ZoneResponseDto> getAllZones() {
-        return zoneRepository.findAll().stream()
-                .map(zoneMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<ZoneSummaryResponseDto> getAllZones(ZonePagingRequestDto zonePagingRequestDto) {
+        Sort sort = switch (zonePagingRequestDto.getSortBy()) {
+            case MORE_MANAGERS -> Sort.by(Sort.Direction.DESC, "userCount");
+            case LESS_MANAGERS -> Sort.by(Sort.Direction.ASC, "userCount");
+            case MORE_CAMERAS -> Sort.by(Sort.Direction.DESC, "cameraCount");
+            case LESS_CAMERAS -> Sort.by(Sort.Direction.ASC, "cameraCount");
+            default -> Sort.unsorted();
+        };
+
+        Pageable pageable = PageRequest.of(zonePagingRequestDto.getPage(), zonePagingRequestDto.getSize(), sort);
+        return zoneRepository.findAll(ZoneSpecification.search(zonePagingRequestDto.getSearch()), pageable)
+                .map(zoneMapper::toSummaryDto);
     }
 
     @Override
-    public ZoneResponseDto getZoneById(Long id) {
+    public ZoneDetailResponseDto getZoneById(Long id) {
         Zone zone = zoneRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Zone not found with id: " + id));
-        return zoneMapper.toDto(zone);
+                .orElseThrow(() -> new ResourceNotFoundException("Zone not found with id: "  + id));
+        return zoneMapper.toDetailDto(zone);
     }
 
     @Override
-    public ZoneResponseDto updateZone(Long id, ZoneRequestDto zoneRequestDto) {
+    public ZoneDetailResponseDto updateZone(Long id, UpdateZoneRequestDto updateZoneRequestDto) {
         Zone zone = zoneRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Zone not found with id: " + id));
-        zone.setName(zoneRequestDto.name());
+                .orElseThrow(() -> new ResourceNotFoundException("Zone not found with id: " + id));
+        zone.setName(updateZoneRequestDto.name());
+        zone.setDescription(updateZoneRequestDto.description());
         Zone updatedZone = zoneRepository.save(zone);
-        return zoneMapper.toDto(updatedZone);
+        return zoneMapper.toDetailDto(updatedZone);
     }
 
     @Override
     public void deleteZone(Long id) {
-        Zone zone = zoneRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Zone not found with id: " + id));
-
-        List<User> users = userRepository.findByZonesId(id, null).getContent();
-        for (User user : users) {
-            user.getZones().remove(zone);
-            user.updateZoneCount();
-            userRepository.save(user);
-        }
-
         zoneRepository.deleteById(id);
     }
 }

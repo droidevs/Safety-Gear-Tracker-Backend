@@ -1,13 +1,12 @@
 package com.droidevs.safety_gear_tracker.service;
 
-import com.droidevs.safety_gear_tracker.dto.ZoneRequestDto;
-import com.droidevs.safety_gear_tracker.dto.ZoneResponseDto;
-import java.util.List;
+import com.droidevs.safety_gear_tracker.dto.*;
+import org.springframework.data.domain.Page;
 
 public interface ZoneService {
-    ZoneResponseDto createZone(ZoneRequestDto zoneRequestDto);
-    List<ZoneResponseDto> getAllZones();
-    ZoneResponseDto getZoneById(Long id);
-    ZoneResponseDto updateZone(Long id, ZoneRequestDto zoneRequestDto);
+    ZoneDetailResponseDto createZone(AddZoneRequestDto addZoneRequestDto);
+    Page<ZoneSummaryResponseDto> getAllZones(ZonePagingRequestDto zonePagingRequestDto);
+    ZoneDetailResponseDto getZoneById(Long id);
+    ZoneDetailResponseDto updateZone(Long id, UpdateZoneRequestDto updateZoneRequestDto);
     void deleteZone(Long id);
 }

@@ -71,7 +71,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
                 .enabled(false)
-                .locked(false)
+                .otpVerified(false)
+                .weeklyCodeVerified(false)
                 .roles(Set.of(userRole))
                 .build();
         userRepository.save(user);
@@ -122,6 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         user.setEnabled(true);
+        user.setOtpVerified(true);
         userRepository.save(user);
         savedOtp.setValidatedAt(LocalDateTime.now());
         otpRepository.save(savedOtp);
