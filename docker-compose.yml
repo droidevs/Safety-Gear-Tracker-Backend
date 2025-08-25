@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   postgres:
     image: postgres:15
@@ -16,12 +17,18 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    volumes:
+      - minio_storage:/data
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ":9001"
-    volumes:
-      - minio_storage:/data
+
+  maildev:
+    image: maildev/maildev
+    ports:
+      - "1080:1080" # Web UI
+      - "1025:1025" # SMTP server
 
   app:
     build: .
@@ -30,13 +37,20 @@ services:
     depends_on:
       - postgres
       - minio
+      - maildev
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/your_database_name
-      - SPRING_DATASOURCE_USERNAME=your_username
-      - SPRING_DATASOURCE_PASSWORD=your_password
-      - MINIO_URL=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/your_database_name
+      SPRING_DATASOURCE_USERNAME: your_username
+      SPRING_DATASOURCE_PASSWORD: your_password
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_KEY: minioadmin
+      AWS_S3_BUCKET: alerts
+      SPRING_MAIL_HOST: maildev
+      SPRING_MAIL_PORT: 1025
+      GEMINI_PROJECT_ID: ${GEMINI_PROJECT_ID}
+      GEMINI_LOCATION: ${GEMINI_LOCATION}
+      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME}
 
 volumes:
   postgres_data:
