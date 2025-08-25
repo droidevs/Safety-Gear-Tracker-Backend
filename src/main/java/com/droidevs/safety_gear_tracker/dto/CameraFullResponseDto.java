@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public record CameraResponseDto(
+
+public record CameraFullResponseDto(
         @JsonProperty("id")
         Long id,
         @JsonProperty("name")
@@ -14,6 +15,12 @@ public record CameraResponseDto(
         String ipAddress,
         @JsonProperty("port")
         int port,
+
+        @JsonProperty("username")
+        String username,
+
+        @JsonProperty("password")
+        String password,
         @JsonProperty("active")
         boolean active,
         @JsonProperty("is_recording_active")

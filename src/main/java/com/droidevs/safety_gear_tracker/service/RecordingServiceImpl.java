@@ -91,7 +91,7 @@ public class RecordingServiceImpl implements RecordingService {
                     Recording recording = new Recording();
                     recording.setCamera(camera);
                     recording.setFilePath(s3Key);
-                    recording.setTimestamp(now);
+                    recording.setStartTime(now);
                     recordingRepository.save(recording);
                     System.out.println("Created recording record in database: " + s3Key);
 
@@ -111,6 +111,9 @@ public class RecordingServiceImpl implements RecordingService {
                     }
 
                     if (exitCode == 0) {
+                        Recording endRecording = recordingRepository.findByFilePath(s3Key);
+                        endRecording.setEndTime(LocalDateTime.now());
+                        recordingRepository.save(recording);
                         System.out.println("Uploading " + tempFile.toString() + " to S3 at " + s3Key);
                         s3Service.uploadFile(s3Key, tempFile.toFile());
                         System.out.println("Recording upload complete for: " + s3Key);

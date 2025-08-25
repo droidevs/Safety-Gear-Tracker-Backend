@@ -16,5 +16,6 @@ public interface RecordingRepository extends JpaRepository<Recording, Long> {
     @Query("SELECT r FROM Recording r WHERE r.camera.id = :cameraId AND r.timestamp <= :timestamp ORDER BY r.timestamp DESC")
     Optional<Recording> findLastRecordingBeforeTimestamp(@Param("cameraId") Long cameraId, @Param("timestamp") LocalDateTime timestamp);
 
+    Recording findByFilePath(String filepath);
     Page<Recording> findByCameraIdIn(List<Long> cameraIds, Pageable pageable);
 }

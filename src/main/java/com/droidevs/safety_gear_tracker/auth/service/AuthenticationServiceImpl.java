@@ -101,7 +101,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String jwtToken = jwtService.generateToken(claims, user);
 
-        return new AuthenticationResponse(jwtToken, jwtService.getJwtSecretInfo().getExpiration_time());
+        return new AuthenticationResponse(jwtToken, jwtService.getJwtSecretInfo().getExpirationTime());
     }
     
     @Override

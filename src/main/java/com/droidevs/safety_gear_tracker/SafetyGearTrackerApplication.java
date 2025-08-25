@@ -13,17 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaAuditing
 public class SafetyGearTrackerApplication {
 
-  @Value("${NAME:World}")
-  String name;
-
-  @RestController
-  class HelloworldController {
-    @GetMapping("/")
-    String hello() {
-      return "Hello " + name + "!";
-    }
-  }
-
   public static void main(String[] args) {
     SpringApplication.run(SafetyGearTrackerApplication.class, args);
   }

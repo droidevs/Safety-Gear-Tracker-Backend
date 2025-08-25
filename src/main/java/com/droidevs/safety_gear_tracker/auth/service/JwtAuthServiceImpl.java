@@ -45,7 +45,7 @@ public class JwtAuthServiceImpl implements JwtAuthService {
             Map<String, Object> extraClaims,
             UserDetails userDetails
     ) {
-        return buildToken(extraClaims, userDetails, jwtSecretInfo.getExpiration_time());
+        return buildToken(extraClaims, userDetails, jwtSecretInfo.getExpirationTime());
     }
 
     @Override
@@ -97,7 +97,7 @@ public class JwtAuthServiceImpl implements JwtAuthService {
 
     @Override
     public Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretInfo.getSecret_key());
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretInfo.getSecretKey());
         return Keys.hmacShaKeyFor(keyBytes);
     }
     

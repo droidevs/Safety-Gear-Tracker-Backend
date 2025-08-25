@@ -1,6 +1,7 @@
 package com.droidevs.safety_gear_tracker.mappers;
 
 import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
+import com.droidevs.safety_gear_tracker.dto.CameraFullResponseDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.model.Camera;
@@ -34,13 +35,29 @@ public class CameraMapperImpl implements CameraMapper {
                 camera.getName(),
                 camera.getIpAddress(),
                 camera.getPort(),
+                camera.isActive(),
+                camera.isRecordingActive(),
+                camera.getZone() != null ? camera.getZone().getId() : null,
+                camera.getRequiredSafetyGear().stream().toList()
+        );
+    }
+
+    @Override
+    public CameraFullResponseDto toFullDto(Camera camera) {
+        if (camera == null) {
+            return null;
+        }
+        return new CameraFullResponseDto(
+                camera.getId(),
+                camera.getName(),
+                camera.getIpAddress(),
+                camera.getPort(),
                 camera.getUsername(),
                 camera.getPassword(),
-                camera.getRtspUrl(),
-                camera.getRequiredSafetyGear(),
-                camera.getZone() != null ? camera.getZone().getId() : null,
                 camera.isActive(),
-                camera.isRecordingActive()
+                camera.isRecordingActive(),
+                camera.getZone() != null ? camera.getZone().getId() : null,
+                camera.getRequiredSafetyGear().stream().toList()
         );
     }
 
