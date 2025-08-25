@@ -23,25 +23,20 @@ services:
     volumes:
       - minio_storage:/data
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:21.1
+  app:
+    build: .
     ports:
-      - "8181:8080"
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - minio
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-    command: start-dev
-
-  face-recognition:
-    build:
-      context: .
-      dockerfile: Dockerfile.python
-    container_name: face-recognition
-    ports:
-      - "8001:8001"
-    restart: unless-stopped
-    volumes:
-      - ./face_database:/app/face_database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/your_database_name
+      - SPRING_DATASOURCE_USERNAME=your_username
+      - SPRING_DATASOURCE_PASSWORD=your_password
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
 
 volumes:
   postgres_data:
