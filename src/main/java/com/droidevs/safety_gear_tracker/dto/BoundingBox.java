@@ -1,4 +1,15 @@
 package com.droidevs.safety_gear_tracker.dto;
 
-public record BoundingBox(int x, int y, int width, int height) {
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record BoundingBox(
+    @JsonProperty("x")
+    int x,
+    @JsonProperty("y")
+    int y,
+    @JsonProperty("width")
+    int width,
+    @JsonProperty("height")
+    int height
+) {
 }
