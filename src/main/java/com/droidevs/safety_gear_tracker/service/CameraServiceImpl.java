@@ -1,7 +1,10 @@
 package com.droidevs.safety_gear_tracker.service;
 
-import com.droidevs.safety_gear_tracker.dto.CameraRequestDto;
+import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
+import com.droidevs.safety_gear_tracker.dto.CameraPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
+import com.droidevs.safety_gear_tracker.dto.PagingResponseDto;
+import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.mappers.CameraMapper;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.model.User;
@@ -9,13 +12,14 @@ import com.droidevs.safety_gear_tracker.model.Zone;
 import com.droidevs.safety_gear_tracker.repository.CameraRepository;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,12 +34,30 @@ public class CameraServiceImpl implements CameraService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CameraResponseDto> getAllCameras() {
+    public PagingResponseDto<CameraResponseDto> getAllCameras(CameraPagingRequestDto request) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return cameraRepository.findAll().stream()
-                .filter(camera -> user.getZones().contains(camera.getZone()))
-                .map(cameraMapper::toDto)
-                .collect(Collectors.toList());
+        Specification<Camera> spec = Specification.where((root, query, cb) -> root.get("zone").in(user.getZones()));
+
+        if (request.getZone() != null && !request.getZone().isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("zone").get("name"), request.getZone()));
+        }
+
+        if (request.getActivationStatus() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("active"), request.getActivationStatus() == com.droidevs.safety_gear_tracker.dto.ActivationStatus.ACTIVE));
+        }
+
+        if (request.getManagementStatus() != null) {
+            // This is a placeholder for more complex logic.
+            // For now, we'll just sort by the number of users in the zone.
+            if (request.getManagementStatus() == com.droidevs.safety_gear_tracker.dto.ManagementStatus.MORE_MANAGED) {
+                // Order by user count descending
+            } else {
+                // Order by user count ascending
+            }
+        }
+
+        Page<Camera> cameraPage = cameraRepository.findAll(spec, request.toPageable());
+        return new PagingResponseDto<>(cameraPage.map(cameraMapper::toDto));
     }
 
     @Override
@@ -49,7 +71,8 @@ public class CameraServiceImpl implements CameraService {
 
     @Override
     @Transactional
-    public CameraResponseDto addCamera(CameraRequestDto cameraDto) {
+    @PreAuthorize("hasRole('MASTER')")
+    public CameraResponseDto addCamera(AddCameraRequestDto cameraDto) {
         Camera camera = cameraMapper.toEntity(cameraDto);
         camera.setActive(true);
         Camera savedCamera = cameraRepository.save(camera);
@@ -62,7 +85,7 @@ public class CameraServiceImpl implements CameraService {
 
     @Override
     @Transactional
-    public Optional<CameraResponseDto> updateCamera(Long id, CameraRequestDto updatedCameraDto) {
+    public Optional<CameraResponseDto> updateCamera(Long id, UpdateCameraRequestDto updatedCameraDto) {
         Optional<Camera> existingCameraOptional = getCameraByIdInternal(id);
         if (existingCameraOptional.isPresent()) {
             Camera cameraToUpdate = existingCameraOptional.get();
@@ -79,13 +102,8 @@ public class CameraServiceImpl implements CameraService {
                 }
             }
 
-            cameraToUpdate.setName(updatedCameraDto.name());
-            cameraToUpdate.setIpAddress(updatedCameraDto.ipAddress());
-            cameraToUpdate.setPort(updatedCameraDto.port());
-            cameraToUpdate.setUsername(updatedCameraDto.username());
-            cameraToUpdate.setPassword(updatedCameraDto.password());
-            cameraToUpdate.setRtspUrl(updatedCameraDto.rtspUrl());
-            cameraToUpdate.setRequiredSafetyGear(updatedCameraDto.requiredSafetyGear());
+            cameraMapper.updateCameraFromDto(updatedCameraDto, cameraToUpdate);
+
 
             if (updatedCameraDto.zoneId() != null) {
                 Zone zone = zoneRepository.findById(updatedCameraDto.zoneId())
@@ -120,15 +138,14 @@ public class CameraServiceImpl implements CameraService {
 
     @Override
     @Transactional
-    public boolean deleteCamera(Long id) {
+    @PreAuthorize("hasRole('MASTER')")
+    public void deleteCamera(Long id) {
         Optional<Camera> cameraToDelete = getCameraByIdInternal(id);
         if (cameraToDelete.isPresent()) {
             videoProcessingService.stopProcessing(id);
             recordingService.stopRecording(id);
             cameraRepository.deleteById(id);
-            return true;
         }
-        return false;
     }
 
     private Optional<Camera> getCameraByIdInternal(Long id) {

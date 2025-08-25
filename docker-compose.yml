@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:13
     environment:
       POSTGRES_DB: your_database_name
       POSTGRES_USER: your_username
@@ -48,6 +48,10 @@ services:
       AWS_S3_BUCKET: alerts
       SPRING_MAIL_HOST: maildev
       SPRING_MAIL_PORT: 1025
+      MASTER_USER_EMAIL: master@droidevs.com
+      MASTER_USER_PASSWORD: MasterPassword123
+      MASTER_USER_FIRSTNAME: Master
+      MASTER_USER_LASTNAME: User
       GEMINI_PROJECT_ID: ${GEMINI_PROJECT_ID}
       GEMINI_LOCATION: ${GEMINI_LOCATION}
       GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME}

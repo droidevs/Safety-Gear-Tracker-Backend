@@ -1,16 +1,19 @@
 package com.droidevs.safety_gear_tracker.controller;
 
-import com.droidevs.safety_gear_tracker.dto.CameraRequestDto;
+import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
+import com.droidevs.safety_gear_tracker.dto.CameraPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
+import com.droidevs.safety_gear_tracker.dto.PagingResponseDto;
+import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.service.CameraService;
 import com.droidevs.safety_gear_tracker.service.VideoProcessingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -22,8 +25,8 @@ public class CameraController {
     private final VideoProcessingService videoProcessingService;
 
     @GetMapping
-    public ResponseEntity<List<CameraResponseDto>> getAllCameras() {
-        List<CameraResponseDto> cameras = cameraService.getAllCameras();
+    public ResponseEntity<PagingResponseDto<CameraResponseDto>> getAllCameras(CameraPagingRequestDto request) {
+        PagingResponseDto<CameraResponseDto> cameras = cameraService.getAllCameras(request);
         return new ResponseEntity<>(cameras, HttpStatus.OK);
     }
 
@@ -35,13 +38,13 @@ public class CameraController {
     }
 
     @PostMapping
-    public ResponseEntity<CameraResponseDto> addCamera(@RequestBody CameraRequestDto cameraDto) {
+    public ResponseEntity<CameraResponseDto> addCamera(@Valid @RequestBody AddCameraRequestDto cameraDto) {
         CameraResponseDto newCamera = cameraService.addCamera(cameraDto);
         return new ResponseEntity<>(newCamera, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CameraResponseDto> updateCamera(@PathVariable Long id, @RequestBody CameraRequestDto camera) {
+    public ResponseEntity<CameraResponseDto> updateCamera(@PathVariable Long id, @Valid @RequestBody UpdateCameraRequestDto camera) {
         Optional<CameraResponseDto> updatedCamera = cameraService.updateCamera(id, camera);
         return updatedCamera.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -49,12 +52,8 @@ public class CameraController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCamera(@PathVariable Long id) {
-        boolean deleted = cameraService.deleteCamera(id);
-        if (deleted) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        cameraService.deleteCamera(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping(value = "/{id}/feed", produces = org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE)
