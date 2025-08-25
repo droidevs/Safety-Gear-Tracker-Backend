@@ -1,5 +1,6 @@
 package com.droidevs.safety_gear_tracker.model;
 
+import com.droidevs.safety_gear_tracker.service.HikvisionRtspUrlBuilder;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +22,6 @@ public class Camera {
     private int port;
     private String username;
     private String password;
-    private String rtspUrl;
     private boolean active;
     private boolean recordingActive;
 
@@ -34,6 +34,7 @@ public class Camera {
     private Zone zone;
 
     public String getStreamUrl() {
-        return rtspUrl;
+        HikvisionRtspUrlBuilder builder = new HikvisionRtspUrlBuilder(ipAddress, port, username, password);
+       return builder.buildRtspUrl(1, true);
     }
 }
