@@ -46,8 +46,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void assignZonesToUser(String email, Set<Long> zoneIds) {
-        User user = userRepository.findByEmail(email)
+    public void assignZonesToUser(Long id, Set<Long> zoneIds) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         Set<Zone> zones = zoneIds.stream()
@@ -76,8 +76,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public UserProfileDto getUser(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public UserProfileDto getUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toUserProfileDto(user);
     }
     
@@ -114,37 +114,37 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void deactivateUser(String email) {
-        if (email.equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
+    public void deactivateUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (user.getEmail().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
             throw new IllegalArgumentException("You cannot deactivate your own account.");
         }
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setLocked(true);
         userRepository.save(user);
     }
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void activateUser(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         user.setLocked(false);
         userRepository.save(user);
     }
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void deleteUser(String email) {
-        if (email.equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (user.getEmail().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
             throw new IllegalArgumentException("You cannot delete your own account.");
         }
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         userRepository.delete(user);
     }
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void removeZoneFromUser(String email, Long zoneId) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public void removeZoneFromUser(Long id, Long zoneId) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         Zone zone = zoneRepository.findById(zoneId).orElseThrow(() -> new RuntimeException("Zone not found"));
         user.getZones().remove(zone);
         user.updateZoneCount();
@@ -153,8 +153,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @PreAuthorize("hasRole('MASTER')")
-    public void promoteToMaster(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public void promoteToMaster(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         Role masterRole = roleRepository.findByName("MASTER").orElseThrow(() -> new RuntimeException("MASTER role not found"));
         user.getRoles().add(masterRole);
         userRepository.save(user);

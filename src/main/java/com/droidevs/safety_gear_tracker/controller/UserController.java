@@ -6,7 +6,6 @@ import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
 import com.droidevs.safety_gear_tracker.dto.*;
 import com.droidevs.safety_gear_tracker.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +21,9 @@ public class UserController {
     private final UserService userService;
     private final WeeklyCodeService weeklyCodeService;
 
-    @PostMapping("/{email}/zones")
-    public ResponseEntity<?> assignZonesToUser(@PathVariable String email, @RequestBody Set<Long> zoneIds) {
-        userService.assignZonesToUser(email, zoneIds);
+    @PostMapping("/{id}/zones")
+    public ResponseEntity<?> assignZonesToUser(@PathVariable Long id, @RequestBody Set<Long> zoneIds) {
+        userService.assignZonesToUser(id, zoneIds);
         return ResponseEntity.ok().build();
     }
     
@@ -34,9 +33,9 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     
-    @GetMapping("/{email}")
-    public ResponseEntity<UserProfileDto> getUser(@PathVariable String email) {
-        return ResponseEntity.ok(userService.getUser(email));
+    @GetMapping("/{id}")
+    public ResponseEntity<UserProfileDto> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUser(id));
     }
     
     @GetMapping("/profile/me")
@@ -49,38 +48,38 @@ public class UserController {
         return ResponseEntity.ok(userService.updateMyProfile(request));
     }
     
-    @PutMapping("/{email}/deactivate")
-    public ResponseEntity<?> deactivateUser(@PathVariable String email) {
-        userService.deactivateUser(email);
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
+        userService.deactivateUser(id);
         return ResponseEntity.ok().build();
     }
     
-    @PutMapping("/{email}/activate")
-    public ResponseEntity<?> activateUser(@PathVariable String email) {
-        userService.activateUser(email);
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<?> activateUser(@PathVariable Long id) {
+        userService.activateUser(id);
         return ResponseEntity.ok().build();
     }
     
-    @DeleteMapping("/{email}")
-    public ResponseEntity<?> deleteUser(@PathVariable String email) {
-        userService.deleteUser(email);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
     
-    @DeleteMapping("/{email}/zones/{zoneId}")
-    public ResponseEntity<?> removeZoneFromUser(@PathVariable String email, @PathVariable Long zoneId) {
-        userService.removeZoneFromUser(email, zoneId);
+    @DeleteMapping("/{id}/zones/{zoneId}")
+    public ResponseEntity<?> removeZoneFromUser(@PathVariable Long id, @PathVariable Long zoneId) {
+        userService.removeZoneFromUser(id, zoneId);
         return ResponseEntity.ok().build();
     }
     
-    @GetMapping("/{email}/latest-weekly-code")
-    public ResponseEntity<Optional<WeeklyCode>> getLatestWeeklyCodeForUser(@PathVariable String email) {
-        return ResponseEntity.ok(weeklyCodeService.getLatestWeeklyCodeForUser(email));
+    @GetMapping("/{id}/latest-weekly-code")
+    public ResponseEntity<Optional<WeeklyCode>> getLatestWeeklyCodeForUser(@PathVariable Long id) {
+        return ResponseEntity.ok(weeklyCodeService.getLatestWeeklyCodeForUser(id));
     }
     
-    @PutMapping("/{email}/promote")
-    public ResponseEntity<?> promoteToMaster(@PathVariable String email) {
-        userService.promoteToMaster(email);
+    @PutMapping("/{id}/promote")
+    public ResponseEntity<?> promoteToMaster(@PathVariable Long id) {
+        userService.promoteToMaster(id);
         return ResponseEntity.ok().build();
     }
 }

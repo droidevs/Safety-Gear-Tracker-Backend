@@ -56,7 +56,7 @@ public class RecordingServiceImpl implements RecordingService {
         cameraRepository.findByActiveTrueAndRecordingActiveTrue().forEach(this::startRecording);
     }
 
-    @Scheduled(fixedRateString = "${recording.schedule.interval.minutes:10}*60*1000")
+    @Scheduled(cron = "0 */10 * * * *")
     public void recordAllActiveCameras() {
         System.out.println("Scheduled recording check started.");
         cameraRepository.findByActiveTrueAndRecordingActiveTrue().forEach(camera -> {

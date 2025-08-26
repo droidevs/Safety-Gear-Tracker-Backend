@@ -91,8 +91,8 @@ public class WeeklyCodeServiceImpl implements WeeklyCodeService {
     }
     
     @Override
-    public Optional<WeeklyCode> getLatestWeeklyCodeForUser(String email) {
-        User user = userRepository.findByEmail(email)
+    public Optional<WeeklyCode> getLatestWeeklyCodeForUser(Long id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return weeklyCodeRepository.findTopByUserOrderByCreatedAtDesc(user);
     }

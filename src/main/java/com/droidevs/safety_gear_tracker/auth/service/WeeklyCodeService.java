@@ -9,5 +9,5 @@ public interface WeeklyCodeService {
     void generateWeeklyCodes();
     void checkExpiredCodesAndLockAccounts();
     void validateCode(String email, String code);
-    Optional<WeeklyCode> getLatestWeeklyCodeForUser(String email);
+    Optional<WeeklyCode> getLatestWeeklyCodeForUser(Long id);
 }

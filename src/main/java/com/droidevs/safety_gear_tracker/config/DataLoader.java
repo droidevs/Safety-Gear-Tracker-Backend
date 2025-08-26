@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
@@ -30,6 +31,7 @@ public class DataLoader implements CommandLineRunner {
     private String masterLastname;
 
     @Override
+    @Transactional
     public void run(String... args) throws Exception {
         Role userRole = roleRepository.findByName("USER").orElseGet(() -> roleRepository.save(Role.builder().name("USER").build()));
         Role masterRole = roleRepository.findByName("MASTER").orElseGet(() -> roleRepository.save(Role.builder().name("MASTER").build()));
