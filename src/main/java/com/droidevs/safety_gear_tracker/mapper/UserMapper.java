@@ -43,7 +43,8 @@ public class UserMapper {
                 user.isAccountNonLocked(),
                 user.getRoles(),
                 user.getZones(),
-                user.getProfilePictureUrl()
+                user.getProfilePictureUrl(),
+                user.isActive()
         );
     }
 

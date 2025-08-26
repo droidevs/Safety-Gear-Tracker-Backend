@@ -23,8 +23,8 @@ public record UserProfileDto(
         Set<Role> roles,
         @JsonProperty("zones")
         Set<Zone> zones,
-        @JsonProperty("current_daily_code")
-        String currentDailyCode,
+        @JsonProperty("current_weekly_code")
+        String currentWeeklyCode,
         @JsonProperty("profile_picture_url")
         String profilePictureUrl
 ) {

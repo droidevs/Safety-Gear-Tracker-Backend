@@ -24,6 +24,8 @@ public record UserSelfProfileDto(
         @JsonProperty("zones")
         Set<Zone> zones,
         @JsonProperty("profile_picture_url")
-        String profilePictureUrl
+        String profilePictureUrl,
+        @JsonProperty("active")
+        boolean active
 ) {
 }

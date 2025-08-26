@@ -90,7 +90,7 @@ public class AuthenticationController {
     }
     
     @PostMapping("/validate-weekly-code")
-    public ResponseEntity<?> validateDailyCode(
+    public ResponseEntity<?> validateWeeklyCode(
             @RequestBody @Valid DailyCodeValidationRequest request,
             @AuthenticationPrincipal String email
     ) {

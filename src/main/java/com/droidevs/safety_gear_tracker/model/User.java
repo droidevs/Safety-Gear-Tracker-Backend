@@ -79,6 +79,10 @@ public class User implements UserDetails {
         return firstname + " " + lastname;
     }
 
+    public boolean isActive() {
+        return enabled && !locked && weeklyCodeVerified && otpVerified;
+    }
+
     @PrePersist
     @PreUpdate
     public void updateZoneCount() {
@@ -108,7 +112,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !locked && weeklyCodeVerified && otpVerified;
+        return !locked;
     }
 
     @Override

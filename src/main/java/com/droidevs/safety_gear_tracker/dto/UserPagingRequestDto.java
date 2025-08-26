@@ -17,6 +17,8 @@ public class UserPagingRequestDto extends PagingRequestDto {
     @JsonProperty("sort_by")
     private UserResponsibilitySort sortBy;
 
+    private Boolean active;
+
     @Override
     public Pageable toPageable() {
         if (sortBy != null) {

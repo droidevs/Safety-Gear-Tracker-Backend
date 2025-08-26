@@ -7,7 +7,6 @@ import com.droidevs.safety_gear_tracker.auth.service.WeeklyCodeService;
 import com.droidevs.safety_gear_tracker.model.Role;
 import com.droidevs.safety_gear_tracker.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
+@WithMockUser
 class AuthenticationControllerTest {
 
     @MockBean
@@ -42,9 +43,6 @@ class AuthenticationControllerTest {
 
     @MockBean
     private WeeklyCodeService weeklyCodeService;
-
-    @MockBean
-    private GenerativeModel generativeModel;
 
     @Autowired
     private MockMvc mockMvc;
@@ -125,7 +123,7 @@ class AuthenticationControllerTest {
         DailyCodeValidationRequest request = new DailyCodeValidationRequest("123456");
         doNothing().when(weeklyCodeService).validateCode(anyString(), anyString());
 
-        mockMvc.perform(post("/api/v1/auth/validate-daily-code")
+        mockMvc.perform(post("/api/v1/auth/validate-weekly-code")
                         .with(authentication(new UsernamePasswordAuthenticationToken(userEmail, null, user.getAuthorities())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

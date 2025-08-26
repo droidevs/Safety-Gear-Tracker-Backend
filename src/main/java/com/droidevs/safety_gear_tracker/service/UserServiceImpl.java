@@ -12,12 +12,14 @@ import com.droidevs.safety_gear_tracker.model.User;
 import com.droidevs.safety_gear_tracker.model.Zone;
 import com.droidevs.safety_gear_tracker.repository.RoleRepository;
 import com.droidevs.safety_gear_tracker.repository.UserRepository;
+import com.droidevs.safety_gear_tracker.repository.UserSpecification;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -63,14 +65,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserSummaryPagingResponseDto getAllUsers(UserPagingRequestDto request) {
         Pageable pageable = request.toPageable();
-        Page<User> userPage;
+        Specification<User> spec = Specification.where(null);
 
         if (request.getZoneId() != null) {
-            userPage = userRepository.findByZonesId(request.getZoneId(), pageable);
-        } else {
-            userPage = userRepository.findAll(pageable);
+            spec = spec.and(UserSpecification.hasZone(request.getZoneId()));
         }
 
+        if (request.getActive() != null) {
+            spec = spec.and(UserSpecification.isActive(request.getActive()));
+        }
+
+        Page<User> userPage = userRepository.findAll(spec, pageable);
         return new UserSummaryPagingResponseDto(userPage.map(userMapper::toUserSummaryResponseDto));
     }
     
@@ -154,7 +159,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public void promoteToMaster(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("MASTER role not found"));
         Role masterRole = roleRepository.findByName("MASTER").orElseThrow(() -> new RuntimeException("MASTER role not found"));
         user.getRoles().add(masterRole);
         userRepository.save(user);
