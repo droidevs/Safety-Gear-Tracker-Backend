@@ -3,7 +3,7 @@ package com.droidevs.safety_gear_tracker.service;
 import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
-import com.droidevs.safety_gear_tracker.dto.PagingResponseDto;
+import com.droidevs.safety_gear_tracker.dto.CameraSummaryPagingResponseDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.mappers.CameraMapper;
 import com.droidevs.safety_gear_tracker.model.Camera;
@@ -36,7 +36,7 @@ public class CameraServiceImpl implements CameraService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<CameraResponseDto> getAllCameras(CameraPagingRequestDto request) {
+    public CameraSummaryPagingResponseDto getAllCameras(CameraPagingRequestDto request) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Specification<Camera> spec = (root, query, cb) -> {
@@ -69,17 +69,17 @@ public class CameraServiceImpl implements CameraService {
             cameraPage = cameraRepository.findAll(spec, pageable);
         }
 
-        return new PagingResponseDto<>(cameraPage.map(cameraMapper::toDto));
+        return new CameraSummaryPagingResponseDto(cameraPage.map(cameraMapper::toSummaryDto));
     }
-
+    
     @Override
     @Transactional(readOnly = true)
-    public Optional<CameraResponseDto> getCameraById(Long id) {
+    public Optional<?> getCameraById(Long id) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<Camera> cameraOptional = cameraRepository.findById(id);
 
         if (user.getRoles().stream().anyMatch(role -> role.getName().equals("MASTER"))) {
-            return cameraOptional.map(cameraMapper::toDto);
+            return cameraOptional.map(cameraMapper::toFullDto);
         }
 
         return cameraOptional

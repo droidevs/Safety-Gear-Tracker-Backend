@@ -4,6 +4,7 @@ import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
 import com.droidevs.safety_gear_tracker.auth.token.WeeklyCodeRepository;
 import com.droidevs.safety_gear_tracker.dto.UserProfileDto;
 import com.droidevs.safety_gear_tracker.dto.UserSelfProfileDto;
+import com.droidevs.safety_gear_tracker.dto.UserSummaryResponseDto;
 import com.droidevs.safety_gear_tracker.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,15 @@ public class UserMapper {
                 user.isAccountNonLocked(),
                 user.getRoles(),
                 user.getZones(),
+                user.getProfilePictureUrl()
+        );
+    }
+
+    public UserSummaryResponseDto toUserSummaryResponseDto(User user) {
+        return new UserSummaryResponseDto(
+                user.getId(),
+                user.getFirstname(),
+                user.getLastname(),
                 user.getProfilePictureUrl()
         );
     }

@@ -41,7 +41,7 @@ public class StreamingServiceImpl implements StreamingService {
             Camera camera = cameraRepository.findById(cameraId)
                     .orElseThrow(() -> new RuntimeException("Camera not found"));
 
-            String rtspUrl = camera.getRtspUrl();
+            String rtspUrl = camera.getStreamUrl();
             Path outputDir = getOutputDir(cameraId);
 
             try {

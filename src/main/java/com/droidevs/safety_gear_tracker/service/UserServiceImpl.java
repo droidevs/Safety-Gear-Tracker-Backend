@@ -5,6 +5,7 @@ import com.droidevs.safety_gear_tracker.dto.UpdateProfileRequestDto;
 import com.droidevs.safety_gear_tracker.dto.UserPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.UserProfileDto;
 import com.droidevs.safety_gear_tracker.dto.UserSelfProfileDto;
+import com.droidevs.safety_gear_tracker.dto.UserSummaryPagingResponseDto;
 import com.droidevs.safety_gear_tracker.mapper.UserMapper;
 import com.droidevs.safety_gear_tracker.model.Role;
 import com.droidevs.safety_gear_tracker.model.User;
@@ -60,8 +61,7 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    @PreAuthorize("hasRole('MASTER')")
-    public Page<UserProfileDto> getAllUsers(UserPagingRequestDto request) {
+    public UserSummaryPagingResponseDto getAllUsers(UserPagingRequestDto request) {
         Pageable pageable = request.toPageable();
         Page<User> userPage;
 
@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
             userPage = userRepository.findAll(pageable);
         }
 
-        return userPage.map(userMapper::toUserProfileDto);
+        return new UserSummaryPagingResponseDto(userPage.map(userMapper::toUserSummaryResponseDto));
     }
     
     @Override

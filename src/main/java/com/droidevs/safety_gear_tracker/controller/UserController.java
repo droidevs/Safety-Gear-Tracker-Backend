@@ -29,9 +29,9 @@ public class UserController {
     }
     
     @GetMapping
-    public ResponseEntity<UserPagingResponseDto> getAllUsers(UserPagingRequestDto request) {
-        Page<UserProfileDto> page = userService.getAllUsers(request);
-        return ResponseEntity.ok(new UserPagingResponseDto(page));
+    public ResponseEntity<UserSummaryPagingResponseDto> getAllUsers(UserPagingRequestDto request) {
+        UserSummaryPagingResponseDto response = userService.getAllUsers(request);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{email}")

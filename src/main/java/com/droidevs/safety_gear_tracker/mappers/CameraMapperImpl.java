@@ -3,6 +3,7 @@ package com.droidevs.safety_gear_tracker.mappers;
 import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraFullResponseDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
+import com.droidevs.safety_gear_tracker.dto.CameraSummaryDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,6 @@ public class CameraMapperImpl implements CameraMapper {
         camera.setPort(dto.port());
         camera.setUsername(dto.username());
         camera.setPassword(dto.password());
-        camera.setRtspUrl(dto.rtspUrl());
         camera.setRequiredSafetyGear(dto.requiredSafetyGear());
         return camera;
     }
@@ -39,6 +39,18 @@ public class CameraMapperImpl implements CameraMapper {
                 camera.isRecordingActive(),
                 camera.getZone() != null ? camera.getZone().getId() : null,
                 camera.getRequiredSafetyGear().stream().toList()
+        );
+    }
+    
+    @Override
+    public CameraSummaryDto toSummaryDto(Camera camera) {
+        if (camera == null) {
+            return null;
+        }
+        return new CameraSummaryDto(
+                camera.getId(),
+                camera.getName(),
+                camera.getZone() != null ? camera.getZone().getName() : null
         );
     }
 
@@ -71,7 +83,6 @@ public class CameraMapperImpl implements CameraMapper {
         camera.setPort(dto.port());
         camera.setUsername(dto.username());
         camera.setPassword(dto.password());
-        camera.setRtspUrl(dto.rtspUrl());
         camera.setRequiredSafetyGear(dto.requiredSafetyGear());
         camera.setActive(dto.active());
         camera.setRecordingActive(dto.isRecordingActive());

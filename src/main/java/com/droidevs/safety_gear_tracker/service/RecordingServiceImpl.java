@@ -53,13 +53,13 @@ public class RecordingServiceImpl implements RecordingService {
 
     @PostConstruct
     public void init() {
-        cameraRepository.findByActiveTrueAndIsRecordingActiveTrue().forEach(this::startRecording);
+        cameraRepository.findByActiveTrueAndRecordingActiveTrue().forEach(this::startRecording);
     }
 
     @Scheduled(fixedRateString = "${recording.schedule.interval.minutes:10}*60*1000")
     public void recordAllActiveCameras() {
         System.out.println("Scheduled recording check started.");
-        cameraRepository.findByActiveTrueAndIsRecordingActiveTrue().forEach(camera -> {
+        cameraRepository.findByActiveTrueAndRecordingActiveTrue().forEach(camera -> {
             if (!activeRecordings.containsKey(camera.getId())) {
                 System.out.println("Starting new recording for camera: " + camera.getId());
                 startRecording(camera);
@@ -101,7 +101,7 @@ public class RecordingServiceImpl implements RecordingService {
 
                     try {
                         System.out.println("Recording camera " + camera.getId() + " to " + tempFile.toString());
-                        process = startFFmpegRecording(camera.getRtspUrl(), tempFile.toString(), recordingDurationMinutes);
+                        process = startFFmpegRecording(camera.getStreamUrl(), tempFile.toString(), recordingDurationMinutes);
                         activeFFmpegProcesses.put(camera.getId(), process);
 
                         exitCode = process.waitFor();

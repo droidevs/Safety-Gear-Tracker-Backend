@@ -3,7 +3,7 @@ package com.droidevs.safety_gear_tracker.controller;
 import com.droidevs.safety_gear_tracker.dto.AddCameraRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
-import com.droidevs.safety_gear_tracker.dto.PagingResponseDto;
+import com.droidevs.safety_gear_tracker.dto.CameraSummaryPagingResponseDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.service.CameraService;
 import com.droidevs.safety_gear_tracker.service.VideoProcessingService;
@@ -25,14 +25,14 @@ public class CameraController {
     private final VideoProcessingService videoProcessingService;
 
     @GetMapping
-    public ResponseEntity<PagingResponseDto<CameraResponseDto>> getAllCameras(CameraPagingRequestDto request) {
-        PagingResponseDto<CameraResponseDto> cameras = cameraService.getAllCameras(request);
+    public ResponseEntity<CameraSummaryPagingResponseDto> getAllCameras(CameraPagingRequestDto request) {
+        CameraSummaryPagingResponseDto cameras = cameraService.getAllCameras(request);
         return new ResponseEntity<>(cameras, HttpStatus.OK);
     }
-
+    
     @GetMapping("/{id}")
-    public ResponseEntity<CameraResponseDto> getCameraById(@PathVariable Long id) {
-        Optional<CameraResponseDto> camera = cameraService.getCameraById(id);
+    public ResponseEntity<?> getCameraById(@PathVariable Long id) {
+        Optional<?> camera = cameraService.getCameraById(id);
         return camera.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
