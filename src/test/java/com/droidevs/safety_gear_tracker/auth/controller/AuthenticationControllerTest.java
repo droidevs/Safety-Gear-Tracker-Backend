@@ -58,7 +58,7 @@ class AuthenticationControllerTest {
         Set<Role> roles = new HashSet<>();
         roles.add(new Role("USER"));
         userEmail = "john.doe@example.com";
-        user = new User("John", "Doe", userEmail, "password", true, roles);
+        user = new User("John", "Doe", userEmail, "password", roles);
     }
 
     @Test

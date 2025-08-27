@@ -65,7 +65,7 @@ public class User implements UserDetails {
     private List<WeeklyCode> weeklyCodes;
 
 
-    public User(String firstname, String lastname, String email, String password, Set<Role> roles) { // Modified constructor
+    public User(String firstname, String lastname, String email, String password, Set<Role> roles) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;

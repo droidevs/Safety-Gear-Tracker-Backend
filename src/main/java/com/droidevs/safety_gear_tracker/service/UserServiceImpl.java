@@ -123,7 +123,7 @@ public class UserServiceImpl implements UserService {
         if (user.getEmail().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
             throw new IllegalArgumentException("You cannot deactivate your own account.");
         }
-        user.setIsActiveByMaster(false); // Changed from setLocked(true) to setIsActiveByMaster(false)
+        user.setActiveByMaster(false); // Corrected to use Lombok's generated setter
         userRepository.save(user);
     }
     
@@ -131,7 +131,7 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize("hasRole('MASTER')")
     public void activateUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.setIsActiveByMaster(true); // Changed from setLocked(false) to setIsActiveByMaster(true)
+        user.setActiveByMaster(true); // Corrected to use Lombok's generated setter
         userRepository.save(user);
     }
     

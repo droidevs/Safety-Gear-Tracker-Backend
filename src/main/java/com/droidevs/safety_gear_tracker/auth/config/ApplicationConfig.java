@@ -5,6 +5,7 @@ import com.droidevs.safety_gear_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -20,6 +21,7 @@ public class ApplicationConfig {
     private final UserRepository userRepository;
 
     @Bean
+    @Primary // Mark this bean as primary
     public UserDetailsService userDetailsService() {
         return new UserDetailsServiceImpl(userRepository);
     }
