@@ -1,4 +1,3 @@
-
 package com.droidevs.safety_gear_tracker.service;
 
 import com.droidevs.safety_gear_tracker.dto.UpdateProfileRequestDto;
@@ -124,7 +123,7 @@ public class UserServiceImpl implements UserService {
         if (user.getEmail().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
             throw new IllegalArgumentException("You cannot deactivate your own account.");
         }
-        user.setLocked(true);
+        user.setIsActiveByMaster(false); // Changed from setLocked(true) to setIsActiveByMaster(false)
         userRepository.save(user);
     }
     
@@ -132,7 +131,7 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize("hasRole('MASTER')")
     public void activateUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.setLocked(false);
+        user.setIsActiveByMaster(true); // Changed from setLocked(false) to setIsActiveByMaster(true)
         userRepository.save(user);
     }
     

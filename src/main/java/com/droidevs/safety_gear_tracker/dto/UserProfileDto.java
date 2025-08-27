@@ -1,10 +1,7 @@
 package com.droidevs.safety_gear_tracker.dto;
 
-import com.droidevs.safety_gear_tracker.model.Role;
-import com.droidevs.safety_gear_tracker.model.Zone;
+import com.droidevs.safety_gear_tracker.auth.token.WeeklyCode;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Set;
 
 public record UserProfileDto(
         @JsonProperty("id")
@@ -15,16 +12,14 @@ public record UserProfileDto(
         String lastname,
         @JsonProperty("email")
         String email,
-        @JsonProperty("enabled")
-        boolean enabled,
+        @JsonProperty("otp_verified")
+        boolean otpVerified, // Replaced 'enabled' with 'otpVerified'
+        @JsonProperty("is_active_by_master")
+        boolean isActiveByMaster, // Added 'isActiveByMaster'
         @JsonProperty("active")
         boolean active,
-        @JsonProperty("roles")
-        Set<Role> roles,
-        @JsonProperty("zones")
-        Set<Zone> zones,
         @JsonProperty("current_weekly_code")
-        String currentWeeklyCode,
+        WeeklyCode currentWeeklyCode,
         @JsonProperty("profile_picture_url")
         String profilePictureUrl
 ) {

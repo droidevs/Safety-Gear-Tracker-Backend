@@ -1,4 +1,3 @@
-
 package com.droidevs.safety_gear_tracker.auth.service;
 
 import com.droidevs.safety_gear_tracker.auth.dtos.AuthenticationRequest;
@@ -70,9 +69,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .lastname(request.lastname())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .enabled(false)
                 .otpVerified(false)
                 .weeklyCodeVerified(false)
+                .isActiveByMaster(false) // Added isActiveByMaster
                 .roles(Set.of(userRole))
                 .build();
         userRepository.save(user);
@@ -107,7 +106,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void sendOtp(String email) throws MessagingException {
         User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
-        if (user.isEnabled()) {
+        if (user.isOtpVerified()) { // Changed from isEnabled() to isOtpVerified()
             throw new AccountAlreadyVerifiedException();
         }
         sendVerificationEmail(user);
@@ -122,8 +121,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new OtpExpiredException();
         }
 
-        user.setEnabled(true);
-        user.setOtpVerified(true);
+        user.setOtpVerified(true); // Removed user.setEnabled(true)
         userRepository.save(user);
         savedOtp.setValidatedAt(LocalDateTime.now());
         otpRepository.save(savedOtp);
@@ -132,7 +130,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public boolean isUserVerified(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
-        return user.isEnabled();
+        return user.isOtpVerified(); // Changed from isEnabled() to isOtpVerified()
     }
     
     @Override

@@ -24,11 +24,10 @@ public class UserMapper {
                 user.getFirstname(),
                 user.getLastname(),
                 user.getEmail(),
-                user.isEnabled(),
-                user.isAccountNonLocked(),
-                user.getRoles(),
-                user.getZones(),
-                latestCode.map(WeeklyCode::getCode).orElse("N/A"),
+                user.isOtpVerified(),
+                user.isActiveByMaster(),
+                user.isActive(), // Added missing 'active' field
+                latestCode.orElse(null),
                 user.getProfilePictureUrl()
         );
     }
@@ -39,12 +38,11 @@ public class UserMapper {
                 user.getFirstname(),
                 user.getLastname(),
                 user.getEmail(),
-                user.isEnabled(),
-                user.isAccountNonLocked(),
-                user.getRoles(),
-                user.getZones(),
                 user.getProfilePictureUrl(),
-                user.isActive()
+                user.isActive(),
+                user.isWeeklyCodeVerified(),
+                user.isOtpVerified(),
+                user.isActiveByMaster()
         );
     }
 

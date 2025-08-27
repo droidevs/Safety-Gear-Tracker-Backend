@@ -42,8 +42,9 @@ public class DataLoader implements CommandLineRunner {
                     .password(passwordEncoder.encode(masterPassword))
                     .firstname(masterFirstname)
                     .lastname(masterLastname)
-                    .enabled(true)
-                    .locked(false)
+                    .otpVerified(true) // Changed from enabled(true)
+                    .isActiveByMaster(true) // Changed from locked(false)
+                    .weeklyCodeVerified(true) // Ensure this is also set for master user
                     .roles(Set.of(masterRole))
                     .build();
             userRepository.save(masterUser);

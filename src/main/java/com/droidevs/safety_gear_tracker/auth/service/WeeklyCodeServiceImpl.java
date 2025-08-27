@@ -53,7 +53,7 @@ public class WeeklyCodeServiceImpl implements WeeklyCodeService {
             if (code.getValidatedAt() == null && LocalDateTime.now().isAfter(code.getExpiresAt())) {
                 User user = code.getUser();
                 if (!user.getEmail().equals(masterEmail)) {
-                    user.setLocked(true);
+                    user.setWeeklyCodeVerified(false); // Changed from setLocked(true) to setWeeklyCodeVerified(false)
                     userRepository.save(user);
                 }
             }
@@ -75,7 +75,7 @@ public class WeeklyCodeServiceImpl implements WeeklyCodeService {
         weeklyCode.setValidatedAt(LocalDateTime.now());
         weeklyCodeRepository.save(weeklyCode);
         
-        user.setLocked(false);
+        user.setWeeklyCodeVerified(true); // Changed from setLocked(false) to setWeeklyCodeVerified(true)
         userRepository.save(user);
     }
 

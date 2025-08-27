@@ -31,13 +31,12 @@ public class User implements UserDetails {
     private String lastname;
     private String email;
     private String password;
-    private boolean enabled;
     private boolean weeklyCodeVerified;
     private boolean otpVerified;
     private LocalDateTime lastPasswordChange;
     private String profilePictureUrl;
     private Integer zoneCount;
-    private boolean locked;
+    private boolean isActiveByMaster; // Replaced 'locked' with 'isActiveByMaster'
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -66,13 +65,15 @@ public class User implements UserDetails {
     private List<WeeklyCode> weeklyCodes;
 
 
-    public User(String firstname, String lastname, String email, String password, boolean enabled, Set<Role> roles) {
+    public User(String firstname, String lastname, String email, String password, Set<Role> roles) { // Modified constructor
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;
         this.password = password;
-        this.enabled = enabled;
         this.roles = roles;
+        this.otpVerified = false; // Default for new users
+        this.weeklyCodeVerified = false; // Default for new users
+        this.isActiveByMaster = false; // Default for new users
     }
 
     public String getFullName() {
@@ -80,7 +81,7 @@ public class User implements UserDetails {
     }
 
     public boolean isActive() {
-        return enabled && !locked && weeklyCodeVerified && otpVerified;
+        return otpVerified && weeklyCodeVerified && isActiveByMaster; // Updated to use otpVerified and isActiveByMaster
     }
 
     @PrePersist
@@ -112,7 +113,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !locked;
+        return isActiveByMaster; // Updated to use isActiveByMaster
     }
 
     @Override
@@ -122,6 +123,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return otpVerified; // Updated to use otpVerified
     }
 }

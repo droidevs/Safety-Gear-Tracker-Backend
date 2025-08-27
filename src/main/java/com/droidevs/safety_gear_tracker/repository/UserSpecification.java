@@ -9,13 +9,13 @@ public class UserSpecification {
         return (root, query, criteriaBuilder) -> {
             if (active) {
                 return criteriaBuilder.and(
-                        criteriaBuilder.isFalse(root.get("locked")),
+                        criteriaBuilder.isTrue(root.get("isActiveByMaster")), // Changed from 'locked' to 'isActiveByMaster'
                         criteriaBuilder.isTrue(root.get("weeklyCodeVerified")),
                         criteriaBuilder.isTrue(root.get("otpVerified"))
                 );
             } else {
                 return criteriaBuilder.or(
-                        criteriaBuilder.isTrue(root.get("locked")),
+                        criteriaBuilder.isFalse(root.get("isActiveByMaster")), // Changed from 'locked' to 'isActiveByMaster'
                         criteriaBuilder.isFalse(root.get("weeklyCodeVerified")),
                         criteriaBuilder.isFalse(root.get("otpVerified"))
                 );
