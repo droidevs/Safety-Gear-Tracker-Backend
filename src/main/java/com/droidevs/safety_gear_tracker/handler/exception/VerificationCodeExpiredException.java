@@ -4,8 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.CONFLICT)
-public class VerificationCodeExpiredException extends RuntimeException {
+public class VerificationCodeExpiredException extends AuthenticationBaseException {
     public VerificationCodeExpiredException() {
-        super("Verification code has expired.");
+        super("The verification code has expired. Please request a new one.");
     }
 }

@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.CONFLICT)
-public class AccountAlreadyVerifiedException extends RuntimeException {
+public class AccountAlreadyVerifiedException extends AuthenticationBaseException {
     public AccountAlreadyVerifiedException() {
         super("This account has already been verified.");
     }

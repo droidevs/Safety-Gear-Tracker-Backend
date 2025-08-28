@@ -2,6 +2,8 @@ package com.droidevs.safety_gear_tracker.service;
 
 import com.droidevs.safety_gear_tracker.dto.BoundingBox;
 import com.droidevs.safety_gear_tracker.dto.SafetyViolation;
+import com.droidevs.safety_gear_tracker.handler.exception.GlobalBaseException;
+import com.droidevs.safety_gear_tracker.handler.exception.JsonParsingException;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.model.SafetyGearType;
 import com.google.cloud.vertexai.api.GenerateContentResponse;
@@ -34,13 +36,13 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
 
         try {
             return processFrameWithAI(imageData, camera);
-        } catch (Exception e) {
+        } catch (GlobalBaseException | IOException e) {
             System.err.println("Error during AI frame processing for camera " + camera.getId() + ": " + e.getMessage());
             return Collections.emptyList();
         }
     }
 
-    private List<SafetyViolation> processFrameWithAI(byte[] imageData, Camera camera) throws IOException {
+    private List<SafetyViolation> processFrameWithAI(byte[] imageData, Camera camera) throws IOException, JsonParsingException {
         String requiredGearList = camera.getRequiredSafetyGear().stream()
                 .map(gear -> "\"" + gear.name().toLowerCase().replace("_", " ") + "\"")
                 .collect(Collectors.joining(", "));
@@ -66,7 +68,7 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
         return parseViolationsJsonResponse(textResponse);
     }
 
-    private List<SafetyViolation> parseViolationsJsonResponse(String jsonResponse) {
+    private List<SafetyViolation> parseViolationsJsonResponse(String jsonResponse) throws JsonParsingException {
         String cleanedJson = jsonResponse.replace("```json", "").replace("```", "").trim();
         List<SafetyViolation> violations = new ArrayList<>();
         try {
@@ -86,6 +88,7 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
                         missingGear.add(SafetyGearType.valueOf(gearString));
                     } catch (IllegalArgumentException e) {
                         System.err.println("Warning: Model returned unknown safety gear type: " + missingGearArray.getString(j));
+                        // Decide whether to throw an exception here or continue. For now, we'll just log and skip.
                     }
                 }
 
@@ -93,8 +96,8 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
                     violations.add(new SafetyViolation(boundingBox, missingGear));
                 }
             }
-        } catch (Exception e) {
-            System.err.println("Error parsing violations JSON response: " + e.getMessage());
+        } catch (org.json.JSONException e) {
+            throw new JsonParsingException("Error parsing violations JSON response", e);
         }
         return violations;
     }

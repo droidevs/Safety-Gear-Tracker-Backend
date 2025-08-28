@@ -13,10 +13,16 @@ import org.springframework.stereotype.Service;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.repository.CameraRepository;
 import reactor.core.publisher.Mono;
+import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
+import com.droidevs.safety_gear_tracker.handler.exception.StreamingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
 public class StreamingServiceImpl implements StreamingService {
+
+    private static final Logger logger = LoggerFactory.getLogger(StreamingServiceImpl.class);
 
     private final CameraRepository cameraRepository;
 
@@ -39,7 +45,7 @@ public class StreamingServiceImpl implements StreamingService {
             }
 
             Camera camera = cameraRepository.findById(cameraId)
-                    .orElseThrow(() -> new RuntimeException("Camera not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Camera not found with ID: " + cameraId));
 
             String rtspUrl = camera.getStreamUrl();
             Path outputDir = getOutputDir(cameraId);
@@ -69,12 +75,12 @@ public class StreamingServiceImpl implements StreamingService {
                                 .map(Path::toFile)
                                 .forEach(File::delete);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        logger.error("Error cleaning up streaming directory on shutdown for camera {}: {}", cameraId, e.getMessage());
                     }
                 }));
 
             } catch (IOException e) {
-                throw new RuntimeException("Failed to start streaming", e);
+                throw new StreamingException("Failed to start streaming for camera " + cameraId, e);
             }
         });
     }
@@ -85,10 +91,10 @@ public class StreamingServiceImpl implements StreamingService {
             if (resource.exists() || resource.isReadable()) {
                 return Mono.just(resource);
             } else {
-                return Mono.error(new RuntimeException("Could not read the file!"));
+                throw new StreamingException("Could not read the file or file does not exist: " + path);
             }
-        } catch (Exception e) {
-            return Mono.error(new RuntimeException("Error: " + e.getMessage()));
+        } catch (IOException e) {
+            throw new StreamingException("Error accessing stream resource at path: " + path, e);
         }
     }
 

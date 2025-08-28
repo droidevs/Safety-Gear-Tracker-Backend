@@ -1,23 +1,27 @@
 package com.droidevs.safety_gear_tracker.service;
 
+import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
+import com.droidevs.safety_gear_tracker.handler.exception.S3OperationException;
+import com.droidevs.safety_gear_tracker.handler.exception.VideoRecordingException;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.model.Recording;
 import com.droidevs.safety_gear_tracker.model.User;
 import com.droidevs.safety_gear_tracker.repository.CameraRepository;
 import com.droidevs.safety_gear_tracker.repository.RecordingRepository;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -28,28 +32,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class RecordingServiceImpl implements RecordingService {
 
     private final CameraRepository cameraRepository;
     private final S3Service s3Service;
     private final RecordingRepository recordingRepository;
+    private final Executor taskExecutor; // Inject Spring's TaskExecutor
 
     @Value("${recording.duration.minutes:10}")
     private int recordingDurationMinutes;
 
     private final Map<Long, Future<?>> activeRecordings = new ConcurrentHashMap<>();
     private final Map<Long, Process> activeFFmpegProcesses = new ConcurrentHashMap<>();
-    private final ExecutorService recordingExecutor = Executors.newCachedThreadPool();
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss");
+
+    public RecordingServiceImpl(
+            CameraRepository cameraRepository,
+            S3Service s3Service,
+            RecordingRepository recordingRepository,
+            @Qualifier("taskExecutor") Executor taskExecutor) {
+        this.cameraRepository = cameraRepository;
+        this.s3Service = s3Service;
+        this.recordingRepository = recordingRepository;
+        this.taskExecutor = taskExecutor;
+    }
 
     @PostConstruct
     public void init() {
@@ -79,92 +92,116 @@ public class RecordingServiceImpl implements RecordingService {
         if (!camera.isActive() || !camera.isRecordingActive() || activeRecordings.containsKey(camera.getId())) {
             return;
         }
-
-        Future<?> future = recordingExecutor.submit(() -> {
-            try {
-                while (cameraRepository.findById(camera.getId()).map(c -> c.isActive() && c.isRecordingActive()).orElse(false)) {
-                    LocalDateTime now = LocalDateTime.now();
-                    String dateFolder = now.format(DATE_FORMATTER);
-                    String timestampFile = now.format(TIMESTAMP_FORMATTER) + ".mp4";
-                    String s3Key = String.format("camera_recordings/%s/%s/%s", camera.getId(), dateFolder, timestampFile);
-
-                    Recording recording = new Recording();
-                    recording.setCamera(camera);
-                    recording.setFilePath(s3Key);
-                    recording.setStartTime(now);
-                    recordingRepository.save(recording);
-                    System.out.println("Created recording record in database: " + s3Key);
-
-                    Path tempFile = Files.createTempFile("camera_recording_", ".mp4");
-                    Process process = null;
-                    int exitCode = -1;
-
-                    try {
-                        System.out.println("Recording camera " + camera.getId() + " to " + tempFile.toString());
-                        process = startFFmpegRecording(camera.getStreamUrl(), tempFile.toString(), recordingDurationMinutes);
-                        activeFFmpegProcesses.put(camera.getId(), process);
-
-                        exitCode = process.waitFor();
-                    } finally {
-                        activeFFmpegProcesses.remove(camera.getId());
-                        System.out.println("FFmpeg for camera " + camera.getId() + " exited with code: " + exitCode);
-                    }
-
-                    if (exitCode == 0) {
-                        Recording endRecording = recordingRepository.findByFilePath(s3Key);
-                        endRecording.setEndTime(LocalDateTime.now());
-                        recordingRepository.save(recording);
-                        System.out.println("Uploading " + tempFile.toString() + " to S3 at " + s3Key);
-                        s3Service.uploadFile(s3Key, tempFile.toFile());
-                        System.out.println("Recording upload complete for: " + s3Key);
-                    } else {
-                        System.err.println("FFmpeg recording failed for camera " + camera.getId());
-                        recordingRepository.delete(recording);
-                        System.err.println("Deleted recording record from database due to failure: " + s3Key);
-                    }
-                    Files.deleteIfExists(tempFile);
-
-                    Thread.sleep(5000);
-                }
-            } catch (Exception e) {
-                System.err.println("Error during recording for camera " + camera.getId() + ": " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                activeRecordings.remove(camera.getId());
-            }
-        });
+        // Submitting the actual recording logic to the async executor
+        // The Future returned here is from the @Async method execution
+        Future<?> future = (Future<?>) taskExecutor.execute(() -> startRecordingAsync(camera));
         activeRecordings.put(camera.getId(), future);
     }
 
-    private Process startFFmpegRecording(String rtspUrl, String outputPath, int durationMinutes) throws IOException {
-        String duration = String.valueOf(durationMinutes * 60);
-        ProcessBuilder builder = new ProcessBuilder(
-                "ffmpeg",
-                "-i", rtspUrl,
-                "-t", duration,
-                "-c:v", "libx264",
-                "-preset", "veryfast",
-                "-crf", "23",
-                "-c:a", "aac",
-                "-b:a", "128k",
-                "-y",
-                outputPath
-        );
-        builder.redirectErrorStream(true);
-        Process process = builder.start();
+    @Async("taskExecutor")
+    private void startRecordingAsync(Camera camera) {
+        try {
+            while (cameraRepository.findById(camera.getId()).map(c -> c.isActive() && c.isRecordingActive()).orElse(false)) {
+                LocalDateTime now = LocalDateTime.now();
+                String dateFolder = now.format(DATE_FORMATTER);
+                String timestampFile = now.format(TIMESTAMP_FORMATTER) + ".mp4";
+                String s3Key = String.format("camera_recordings/%s/%s/%s", camera.getId(), dateFolder, timestampFile);
 
-        new Thread(() -> {
-            try (InputStream is = process.getInputStream()) {
-                byte[] buffer = new byte[1024];
-                while (is.read(buffer) != -1) {
-                    // Consume the stream but don't print to avoid excessive logging
+                Recording recording = new Recording();
+                recording.setCamera(camera);
+                recording.setFilePath(s3Key);
+                recording.setStartTime(now);
+                recordingRepository.save(recording);
+                System.out.println("Created recording record in database: " + s3Key);
+
+                Path tempFile = Files.createTempFile("camera_recording_", ".mp4");
+                Process process = null;
+                int exitCode = -1;
+
+                try {
+                    System.out.println("Recording camera " + camera.getId() + " to " + tempFile.toString());
+                    process = startFFmpegRecording(camera.getStreamUrl(), tempFile.toString(), recordingDurationMinutes);
+                    activeFFmpegProcesses.put(camera.getId(), process);
+
+                    exitCode = process.waitFor();
+                } catch (VideoRecordingException e) {
+                    System.err.println("FFmpeg recording failed for camera " + camera.getId() + ": " + e.getMessage());
+                    throw e; 
+                } finally {
+                    activeFFmpegProcesses.remove(camera.getId());
+                    System.out.println("FFmpeg for camera " + camera.getId() + " exited with code: " + exitCode);
                 }
-            } catch (IOException e) {
-                System.err.println("Error reading FFmpeg output: " + e.getMessage());
-            }
-        }).start();
 
-        return process;
+                if (exitCode == 0) {
+                    Recording endRecording = recordingRepository.findByFilePath(s3Key);
+                    if (endRecording != null) {
+                        endRecording.setEndTime(LocalDateTime.now());
+                        recordingRepository.save(endRecording);
+                    }
+                    System.out.println("Uploading " + tempFile.toString() + " to S3 at " + s3Key);
+                    try {
+                        s3Service.uploadFile(s3Key, tempFile.toFile());
+                    } catch (S3OperationException e) {
+                        throw new S3OperationException("Failed to upload recorded file to S3 for camera " + camera.getId(), e);
+                    }
+                    System.out.println("Recording upload complete for: " + s3Key);
+                } else {
+                    System.err.println("FFmpeg recording failed for camera " + camera.getId());
+                    recordingRepository.delete(recording);
+                    System.err.println("Deleted recording record from database due to failure: " + s3Key);
+                }
+                Files.deleteIfExists(tempFile);
+
+                Thread.sleep(5000);
+            }
+        } catch (IOException e) {
+            throw new VideoRecordingException("File system error during recording for camera " + camera.getId(), e);
+        } catch (S3OperationException e) {
+            throw new S3OperationException("S3 operation failed during recording for camera " + camera.getId(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); 
+            throw new VideoRecordingException("Recording for camera " + camera.getId() + " was interrupted.", e);
+        } catch (Exception e) { 
+            throw new VideoRecordingException("An unexpected error occurred during recording for camera " + camera.getId(), e);
+        } finally {
+            activeRecordings.remove(camera.getId());
+        }
+    }
+
+    private Process startFFmpegRecording(String rtspUrl, String outputPath, int durationMinutes) throws VideoRecordingException {
+        String duration = String.valueOf(durationMinutes * 60);
+        try {
+            ProcessBuilder builder = new ProcessBuilder(
+                    "ffmpeg",
+                    "-i", rtspUrl,
+                    "-t", duration,
+                    "-c:v", "libx264",
+                    "-preset", "veryfast",
+                    "-crf", "23",
+                    "-c:a", "aac",
+                    "-b:a", "128k",
+                    "-y",
+                    outputPath
+            );
+            builder.redirectErrorStream(true);
+            Process process = builder.start();
+
+            new Thread(() -> {
+                try (InputStream is = process.getInputStream()) {
+                    byte[] buffer = new byte[1024];
+                    while (is.read(buffer) != -1) {
+                        // Consume the stream but don't print to avoid excessive logging
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error reading FFmpeg output: " + e.getMessage());
+                    // Log only, as this is a background thread and shouldn't stop the main recording process.
+                }
+            }).start();
+
+            return process;
+        } catch (IOException e) {
+            throw new VideoRecordingException("Failed to start FFmpeg process for RTSP stream: " + rtspUrl, e);
+        }
     }
 
     @Override
@@ -175,7 +212,7 @@ public class RecordingServiceImpl implements RecordingService {
         }
         Process ffmpegProcess = activeFFmpegProcesses.remove(cameraId);
         if (ffmpegProcess != null) {
-            ffmpegProcess.destroyForcibly();
+            ffmpegProcess.destroyForCibly();
         }
     }
 
@@ -190,62 +227,50 @@ public class RecordingServiceImpl implements RecordingService {
     }
 
     @Override
-    public Optional<Recording> getRecordingById(Long id) {
-        return recordingRepository.findById(id);
+    public Recording getRecordingById(Long id) {
+        return recordingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recording not found with ID: " + id));
     }
 
     @Override
     public byte[] getRecordingFile(Long id) {
-        Optional<Recording> recordingOptional = recordingRepository.findById(id);
-        if (recordingOptional.isPresent()) {
-            Recording recording = recordingOptional.get();
-            try {
-                return s3Service.downloadFile(recording.getFilePath());
-            } catch (IOException e) {
-                System.err.println("Error downloading recording file from S3: " + e.getMessage());
-                return null;
-            }
+        Recording recording = recordingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recording not found with ID: " + id));
+        try {
+            return s3Service.downloadFile(recording.getFilePath());
+        } catch (S3OperationException e) {
+            throw new S3OperationException("Failed to download recording file from S3 for ID: " + id, e);
         }
-        return null;
     }
 
     @Override
     public InputStreamResource getRecordingFileStream(Long id) {
-        Optional<Recording> recordingOptional = recordingRepository.findById(id);
-        if (recordingOptional.isPresent()) {
-            Recording recording = recordingOptional.get();
-            try {
-                ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(recording.getFilePath());
-                return new InputStreamResource(s3Object);
-            } catch (Exception e) {
-                System.err.println("Error downloading recording file from S3: " + e.getMessage());
-                return null;
-            }
+        Recording recording = recordingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recording not found with ID: " + id));
+        try {
+            ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(recording.getFilePath());
+            return new InputStreamResource(s3Object);
+        } catch (S3OperationException e) {
+            throw new S3OperationException("Failed to stream recording file from S3 for ID: " + id, e);
         }
-        return null;
     }
 
     @Override
-    public boolean deleteRecording(Long id) {
-        Optional<Recording> recordingOptional = recordingRepository.findById(id);
-        if (recordingOptional.isPresent()) {
-            Recording recording = recordingOptional.get();
-            try {
-                s3Service.deleteFile(recording.getFilePath());
-                recordingRepository.delete(recording);
-                return true;
-            } catch (IOException e) {
-                System.err.println("Error deleting recording file from S3: " + e.getMessage());
-                return false;
-            }
+    public void deleteRecording(Long id) {
+        Recording recording = recordingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recording not found with ID: " + id));
+        try {
+            s3Service.deleteFile(recording.getFilePath());
+            recordingRepository.delete(recording);
+        } catch (S3OperationException e) {
+            throw new S3OperationException("Failed to delete recording file from S3 for ID: " + id, e);
         }
-        return false;
     }
 
     @PreDestroy
     public void shutdown() {
         System.out.println("Shutting down recording service. Stopping all active recordings...");
         activeRecordings.keySet().forEach(this::stopRecording);
-        recordingExecutor.shutdownNow();
+        // The TaskExecutor is managed by Spring, no need to shut it down here manually.
     }
 }

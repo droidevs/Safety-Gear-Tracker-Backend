@@ -5,6 +5,8 @@ import com.droidevs.safety_gear_tracker.dto.CameraPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.CameraResponseDto;
 import com.droidevs.safety_gear_tracker.dto.CameraSummaryPagingResponseDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
+import com.droidevs.safety_gear_tracker.handler.exception.CameraManagementException;
+import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
 import com.droidevs.safety_gear_tracker.mappers.CameraMapper;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.model.User;
@@ -94,7 +96,7 @@ public class CameraServiceImpl implements CameraService {
         Camera camera = cameraMapper.toEntity(cameraDto);
 
         Zone zone = zoneRepository.findById(cameraDto.zoneId())
-                .orElseThrow(() -> new RuntimeException("Zone not found with id: " + cameraDto.zoneId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Zone not found with id: " + cameraDto.zoneId()));
         camera.setZone(zone);
         camera.setActive(true);
 
@@ -114,20 +116,16 @@ public class CameraServiceImpl implements CameraService {
         return cameraRepository.findById(id).map(cameraToUpdate -> {
             if (!cameraToUpdate.getUsername().equals(updatedCameraDto.username()) ||
                 !cameraToUpdate.getPassword().equals(updatedCameraDto.password())) {
-                boolean credentialsChanged = cameraManagementService.changeCredentials(
+                cameraManagementService.changeCredentials(
                         cameraToUpdate.getIpAddress(), cameraToUpdate.getPort(),
                         cameraToUpdate.getUsername(), cameraToUpdate.getPassword(),
                         updatedCameraDto.username(), updatedCameraDto.password());
-
-                if (!credentialsChanged) {
-                    throw new RuntimeException("Failed to update camera credentials on the device.");
-                }
             }
 
             cameraMapper.updateCameraFromDto(updatedCameraDto, cameraToUpdate);
 
             Zone zone = zoneRepository.findById(updatedCameraDto.zoneId())
-                    .orElseThrow(() -> new RuntimeException("Zone not found with id: " + updatedCameraDto.zoneId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Zone not found with id: " + updatedCameraDto.zoneId()));
             cameraToUpdate.setZone(zone);
 
             boolean wasActive = cameraToUpdate.isActive();

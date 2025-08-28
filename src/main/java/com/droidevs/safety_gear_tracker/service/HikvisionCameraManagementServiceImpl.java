@@ -1,5 +1,6 @@
 package com.droidevs.safety_gear_tracker.service;
 
+import com.droidevs.safety_gear_tracker.handler.exception.CameraManagementException;
 import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
@@ -22,12 +23,12 @@ public class HikvisionCameraManagementServiceImpl implements CameraManagementSer
     private static final Logger logger = LoggerFactory.getLogger(HikvisionCameraManagementServiceImpl.class);
 
     @Override
-    public boolean changeCredentials(String ipAddress, int port, String oldUsername, String oldPassword, String newUsername, String newPassword) {
+    public void changeCredentials(String ipAddress, int port, String oldUsername, String oldPassword, String newUsername, String newPassword) {
         if (!StringUtils.hasText(ipAddress) || port <= 0 ||
             !StringUtils.hasText(oldUsername) || !StringUtils.hasText(oldPassword) ||
             !StringUtils.hasText(newUsername) || !StringUtils.hasText(newPassword)) {
             logger.error("Invalid arguments provided for changing camera credentials.");
-            return false;
+            throw new IllegalArgumentException("Invalid arguments provided for changing camera credentials.");
         }
 
         String url = String.format("http://%s:%d/ISAPI/Security/users/1", ipAddress, port);
@@ -47,20 +48,22 @@ public class HikvisionCameraManagementServiceImpl implements CameraManagementSer
             httpPut.setEntity(new StringEntity(xmlPayload));
             httpPut.setHeader("Content-Type", "application/xml");
 
-            return httpClient.execute(httpPut, response -> {
+            httpClient.execute(httpPut, response -> {
                 int statusCode = response.getCode();
                 if (statusCode >= 200 && statusCode < 300) {
                     logger.info("Successfully changed credentials for camera at {}", ipAddress);
-                    return true;
+                    return true; // Return value for the HttpClient.execute lambda
                 } else {
-                    logger.error("Failed to change credentials for camera at {}. Status code: {}", ipAddress, statusCode);
-                    return false;
+                    String errorMessage = String.format("Failed to change credentials for camera at %s. Status code: %d", ipAddress, statusCode);
+                    logger.error(errorMessage);
+                    throw new CameraManagementException(errorMessage);
                 }
             });
 
         } catch (IOException e) {
-            logger.error("Error changing credentials for camera at {}", ipAddress, e);
-            return false;
+            String errorMessage = String.format("Error changing credentials for camera at %s: %s", ipAddress, e.getMessage());
+            logger.error(errorMessage, e);
+            throw new CameraManagementException(errorMessage, e);
         }
     }
 }

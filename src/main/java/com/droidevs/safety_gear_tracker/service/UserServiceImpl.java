@@ -5,7 +5,11 @@ import com.droidevs.safety_gear_tracker.dto.UserPagingRequestDto;
 import com.droidevs.safety_gear_tracker.dto.UserProfileDto;
 import com.droidevs.safety_gear_tracker.dto.UserSelfProfileDto;
 import com.droidevs.safety_gear_tracker.dto.UserSummaryPagingResponseDto;
-import com.droidevs.safety_gear_tracker.mapper.UserMapper;
+import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
+import com.droidevs.safety_gear_tracker.handler.exception.S3OperationException;
+import com.droidevs.safety_gear_tracker.handler.exception.SelfDeactivationException;
+import com.droidevs.safety_gear_tracker.handler.exception.SelfDeletionException;
+import com.droidevs.safety_gear_tracker.handler.exception.UserNotFoundException;
 import com.droidevs.safety_gear_tracker.model.Role;
 import com.droidevs.safety_gear_tracker.model.User;
 import com.droidevs.safety_gear_tracker.model.Zone;
@@ -21,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,11 +52,11 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize("hasRole('MASTER')")
     public void assignZonesToUser(Long id, Set<Long> zoneIds) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
 
         Set<Zone> zones = zoneIds.stream()
                 .map(zoneId -> zoneRepository.findById(zoneId)
-                        .orElseThrow(() -> new RuntimeException("Zone not found")))
+                        .orElseThrow(() -> new ResourceNotFoundException("Zone not found with ID: " + zoneId)))
                 .collect(Collectors.toSet());
 
         user.setZones(zones);
@@ -81,21 +84,21 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public UserProfileDto getUser(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         return userMapper.toUserProfileDto(user);
     }
     
     @Override
     public UserSelfProfileDto getMyProfile() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
         return userMapper.toUserSelfProfileDto(user);
     }
     
     @Override
-    public UserSelfProfileDto updateMyProfile(UpdateProfileRequestDto request) throws IOException {
+    public UserSelfProfileDto updateMyProfile(UpdateProfileRequestDto request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         if (request.firstname() != null && !request.firstname().isEmpty()) {
             user.setFirstname(request.firstname());
@@ -108,7 +111,13 @@ public class UserServiceImpl implements UserService {
         MultipartFile profilePicture = request.profilePicture();
         if (profilePicture != null && !profilePicture.isEmpty()) {
             String profilePictureKey = "profile-pictures/" + user.getId() + "/" + UUID.randomUUID() + "-" + profilePicture.getOriginalFilename();
-            s3Service.uploadFile(profilePictureKey, profilePicture.getInputStream());
+            try {
+                s3Service.uploadFile(profilePictureKey, profilePicture.getInputStream());
+            } catch (IOException e) { // IOException from profilePicture.getInputStream()
+                throw new S3OperationException("Failed to read profile picture data for upload to S3 for user: " + user.getId(), e);
+            } catch (S3OperationException e) { // S3OperationException from s3Service.uploadFile
+                throw new S3OperationException("Failed to upload profile picture to S3 for user: " + user.getId(), e);
+            }
             user.setProfilePictureUrl(profilePictureKey);
         }
 
@@ -119,9 +128,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public void deactivateUser(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         if (user.getEmail().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
-            throw new IllegalArgumentException("You cannot deactivate your own account.");
+            throw new SelfDeactivationException();
         }
         user.setActiveByMaster(false); // Corrected to use Lombok's generated setter
         userRepository.save(user);
@@ -130,7 +139,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public void activateUser(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         user.setActiveByMaster(true); // Corrected to use Lombok's generated setter
         userRepository.save(user);
     }
@@ -138,9 +147,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public void deleteUser(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         if (user.getEmail().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
-            throw new IllegalArgumentException("You cannot delete your own account.");
+            throw new SelfDeletionException();
         }
         userRepository.delete(user);
     }
@@ -148,8 +157,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public void removeZoneFromUser(Long id, Long zoneId) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        Zone zone = zoneRepository.findById(zoneId).orElseThrow(() -> new RuntimeException("Zone not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
+        Zone zone = zoneRepository.findById(zoneId).orElseThrow(() -> new ResourceNotFoundException("Zone not found with ID: " + zoneId));
         user.getZones().remove(zone);
         user.updateZoneCount();
         userRepository.save(user);
@@ -158,8 +167,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @PreAuthorize("hasRole('MASTER')")
     public void promoteToMaster(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("MASTER role not found"));
-        Role masterRole = roleRepository.findByName("MASTER").orElseThrow(() -> new RuntimeException("MASTER role not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
+        Role masterRole = roleRepository.findByName("MASTER").orElseThrow(() -> new ResourceNotFoundException("MASTER role not found"));
         user.getRoles().add(masterRole);
         userRepository.save(user);
     }

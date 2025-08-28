@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class PasswordChangeTooFrequentException extends RuntimeException {
+public class PasswordChangeTooFrequentException extends AuthenticationBaseException {
     public PasswordChangeTooFrequentException() {
         super("You can only change your password once a week.");
     }

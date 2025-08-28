@@ -2,6 +2,8 @@ package com.droidevs.safety_gear_tracker.service;
 
 import com.droidevs.safety_gear_tracker.dto.AlertRequestDto;
 import com.droidevs.safety_gear_tracker.dto.AlertResponseDto;
+import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
+import com.droidevs.safety_gear_tracker.handler.exception.S3OperationException;
 import com.droidevs.safety_gear_tracker.mappers.AlertMapper;
 import com.droidevs.safety_gear_tracker.model.Alert;
 import com.droidevs.safety_gear_tracker.model.Camera;
@@ -41,14 +43,21 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     @Transactional
-    public AlertResponseDto createAlert(AlertRequestDto alertRequestDto) throws IOException {
+    public AlertResponseDto createAlert(AlertRequestDto alertRequestDto) {
         Alert alert = new Alert();
         alert.setCameraName(alertRequestDto.cameraName());
         alert.setDescription(alertRequestDto.description());
         alert.setTimestamp(LocalDateTime.now());
 
         String screenshotKey = "screenshots/" + UUID.randomUUID() + "-" + alertRequestDto.screenshot().getOriginalFilename();
-        s3Service.uploadFile(screenshotKey, alertRequestDto.screenshot().getInputStream());
+        try {
+            s3Service.uploadFile(screenshotKey, alertRequestDto.screenshot().getInputStream());
+        } catch (IOException e) { // IOException from alertRequestDto.screenshot().getInputStream()
+            throw new S3OperationException("Failed to get input stream for screenshot for alert: " + alertRequestDto.cameraName(), e);
+        } catch (S3OperationException e) { // S3OperationException from s3Service.uploadFile
+            // Re-throw with more specific context for Alert creation
+            throw new S3OperationException("Failed to upload alert screenshot to S3 for camera: " + alertRequestDto.cameraName(), e);
+        }
         alert.setScreenshotUrl(screenshotKey);
 
         Optional<Camera> cameraOptional = cameraRepository.findByName(alertRequestDto.cameraName());
@@ -83,53 +92,42 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public byte[] getAlertScreenshot(Long alertId) {
-        Optional<Alert> alert = alertRepository.findById(alertId);
-        if (alert.isPresent()) {
-            try {
-                return s3Service.downloadFile(alert.get().getScreenshotUrl());
-            } catch (IOException e) {
-                System.err.println("Error downloading alert screenshot from S3: " + e.getMessage());
-                e.printStackTrace();
-                return null;
-            }
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found with ID: " + alertId));
+        try {
+            return s3Service.downloadFile(alert.getScreenshotUrl());
+        } catch (S3OperationException e) { 
+            throw new S3OperationException("Failed to download alert screenshot from S3 for alert ID: " + alertId, e);
         }
-        return null;
     }
 
     @Override
     public InputStreamResource getAlertScreenshotStream(Long alertId) {
-        Optional<Alert> alertOptional = alertRepository.findById(alertId);
-        if (alertOptional.isPresent()) {
-            Alert alert = alertOptional.get();
-            try {
-                ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(alert.getScreenshotUrl());
-                return new InputStreamResource(s3Object);
-            } catch (Exception e) {
-                System.err.println("Error streaming alert screenshot from S3: " + e.getMessage());
-                e.printStackTrace();
-                return null;
-            }
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found with ID: " + alertId));
+        try {
+            ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(alert.getScreenshotUrl());
+            return new InputStreamResource(s3Object);
+        } catch (S3OperationException e) { 
+            throw new S3OperationException("Error streaming alert screenshot from S3 for alert ID: " + alertId, e);
         }
-        return null;
     }
 
     @Override
     public InputStreamResource getAlertRecordingStream(Long alertId) {
-        Optional<Alert> alertOptional = alertRepository.findById(alertId);
-        if (alertOptional.isPresent()) {
-            Alert alert = alertOptional.get();
-            Recording recording = alert.getRecording();
-            if (recording != null && recording.getFilePath() != null && !recording.getFilePath().isEmpty()) {
-                try {
-                    ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(recording.getFilePath());
-                    return new InputStreamResource(s3Object);
-                } catch (Exception e) {
-                    System.err.println("Error streaming alert recording from S3: " + e.getMessage());
-                    e.printStackTrace();
-                    return null;
-                }
-            }
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found with ID: " + alertId));
+
+        Recording recording = alert.getRecording();
+        if (recording == null || recording.getFilePath() == null || recording.getFilePath().isEmpty()) {
+            throw new ResourceNotFoundException("No recording found for alert ID: " + alertId);
         }
-        return null;
+
+        try {
+            ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(recording.getFilePath());
+            return new InputStreamResource(s3Object);
+        } catch (S3OperationException e) {
+            throw new S3OperationException("Error streaming alert recording from S3 for alert ID: " + alertId, e);
+        }
     }
 }

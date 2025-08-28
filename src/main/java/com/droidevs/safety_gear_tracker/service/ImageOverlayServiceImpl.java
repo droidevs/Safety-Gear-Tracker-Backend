@@ -1,6 +1,7 @@
 package com.droidevs.safety_gear_tracker.service;
 
 import com.droidevs.safety_gear_tracker.dto.SafetyViolation;
+import com.droidevs.safety_gear_tracker.handler.exception.ImageProcessingException;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.Point;
@@ -18,7 +19,15 @@ public class ImageOverlayServiceImpl implements ImageOverlayService {
 
     @Override
     public byte[] drawViolationsOnImage(byte[] originalImage, List<SafetyViolation> violations) {
-        Mat image = Imgcodecs.imdecode(new MatOfByte(originalImage), Imgcodecs.IMREAD_COLOR);
+        Mat image;
+        try {
+            image = Imgcodecs.imdecode(new MatOfByte(originalImage), Imgcodecs.IMREAD_COLOR);
+            if (image.empty()) {
+                throw new ImageProcessingException("Could not decode image or image is empty.");
+            }
+        } catch (Exception e) {
+            throw new ImageProcessingException("Failed to decode original image for overlay.", e);
+        }
 
         for (SafetyViolation violation : violations) {
             // Draw a red bounding box around the person
@@ -41,7 +50,11 @@ public class ImageOverlayServiceImpl implements ImageOverlayService {
         }
 
         MatOfByte matOfByte = new MatOfByte();
-        Imgcodecs.imencode(".jpg", image, matOfByte);
+        try {
+            Imgcodecs.imencode(".jpg", image, matOfByte);
+        } catch (Exception e) {
+            throw new ImageProcessingException("Failed to encode image with violations.", e);
+        }
         return matOfByte.toArray();
     }
 }

@@ -4,8 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class InvalidPasswordException extends AuthenticationBaseException {
-    public InvalidPasswordException() {
-        super("Invalid password.");
+public class SelfDeactivationException extends AuthenticationBaseException {
+    public SelfDeactivationException() {
+        super("You cannot deactivate your own account.");
     }
 }

@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.CONFLICT)
-public class AlreadyUsedOtpException extends RuntimeException {
+public class AlreadyUsedOtpException extends AuthenticationBaseException {
     public AlreadyUsedOtpException() {
         super("This OTP has already been used.");
     }
