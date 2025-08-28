@@ -57,11 +57,7 @@ public class RecordingController {
 
     @DeleteMapping("/{recordingId}")
     public ResponseEntity<Void> deleteRecording(@PathVariable Long recordingId) {
-        boolean deleted = recordingService.deleteRecording(recordingId);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        recordingService.deleteRecording(recordingId);
+        return ResponseEntity.noContent().build();
     }
 }

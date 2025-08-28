@@ -16,5 +16,5 @@ public interface RecordingService {
     Optional<Recording> getRecordingById(Long id);
     byte[] getRecordingFile(Long id);
     InputStreamResource getRecordingFileStream(Long id);
-    boolean deleteRecording(Long id);
+    void deleteRecording(Long id); // Changed return type to void
 }

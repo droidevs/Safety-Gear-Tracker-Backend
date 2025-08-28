@@ -1,6 +1,7 @@
 package com.droidevs.safety_gear_tracker.processors;
 
 import com.droidevs.safety_gear_tracker.dto.SafetyViolation;
+import com.droidevs.safety_gear_tracker.handler.exception.S3OperationException;
 import com.droidevs.safety_gear_tracker.model.Alert;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.model.Recording;
@@ -11,6 +12,7 @@ import com.droidevs.safety_gear_tracker.service.ImageOverlayService;
 import com.droidevs.safety_gear_tracker.service.RecordingService;
 import com.droidevs.safety_gear_tracker.service.S3Service;
 import com.droidevs.safety_gear_tracker.service.SafetyGearDetectionService;
+import lombok.extern.slf4j.Slf4j;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -26,6 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class VideoProcessor implements Runnable {
 
     private final Camera camera;
@@ -58,6 +61,10 @@ public class VideoProcessor implements Runnable {
         return this.frameFlux;
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
     @Override
     public void run() {
         VideoCapture cap = new VideoCapture(camera.getStreamUrl());
@@ -65,31 +72,47 @@ public class VideoProcessor implements Runnable {
             if (this.frameSink != null) {
                 this.frameSink.error(new IOException("Cannot open camera stream: " + camera.getStreamUrl()));
             }
+            log.error("Failed to open camera stream for camera {}: {}", camera.getId(), camera.getStreamUrl());
+            running = false;
             return;
         }
 
         Mat frame = new Mat();
         int frameCount = 0;
-        while (running && cap.read(frame)) {
-            MatOfByte matOfByte = new MatOfByte();
-            Imgcodecs.imencode(".jpg", frame, matOfByte);
-            byte[] imageData = matOfByte.toArray();
+        try {
+            while (running && cap.read(frame)) {
+                MatOfByte matOfByte = new MatOfByte();
+                Imgcodecs.imencode(".jpg", frame, matOfByte);
+                byte[] imageData = matOfByte.toArray();
 
-            if (frameSink != null) {
-                frameSink.next(imageData);
-            }
-
-            if (frameCount % FRAME_SKIP_AI == 0) {
-                List<SafetyViolation> violations = safetyGearDetectionService.findViolations(imageData, camera);
-                if (!violations.isEmpty()) {
-                    handleViolations(violations, imageData);
+                if (frameSink != null && !frameSink.isCancelled()) {
+                    frameSink.next(imageData);
                 }
+
+                if (frameCount % FRAME_SKIP_AI == 0) {
+                    try {
+                        List<SafetyViolation> violations = safetyGearDetectionService.findViolations(imageData, camera);
+                        if (!violations.isEmpty()) {
+                            handleViolations(violations, imageData);
+                        }
+                    } catch (Exception e) {
+                        log.error("Error during violation detection or handling for camera {}: {}", camera.getId(), e.getMessage(), e);
+                    }
+                }
+                frameCount++;
             }
-            frameCount++;
-        }
-        cap.release();
-        if (frameSink != null && !frameSink.isCancelled()) {
-            frameSink.complete();
+        } catch (Exception e) {
+            log.error("Unhandled exception in VideoProcessor for camera {}: {}", camera.getId(), e.getMessage(), e);
+            if (frameSink != null) {
+                frameSink.error(e);
+            }
+        } finally {
+            cap.release();
+            if (frameSink != null && !frameSink.isCancelled()) {
+                frameSink.complete();
+            }
+            running = false;
+            log.info("Video processing stopped for camera: {}", camera.getId());
         }
     }
 
@@ -103,31 +126,31 @@ public class VideoProcessor implements Runnable {
         String snapshotFileName = "snapshot-" + UUID.randomUUID() + ".jpg";
         try {
             s3Service.uploadFile(snapshotFileName, new ByteArrayInputStream(annotatedImage));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LocalDateTime timestamp = LocalDateTime.now();
+            LocalDateTime timestamp = LocalDateTime.now();
 
-        Optional<Recording> lastRecording = recordingRepository.findLastRecordingBeforeTimestamp(camera.getId(), timestamp);
+            Optional<Recording> lastRecording = recordingRepository.findLastRecordingBeforeTimestamp(camera.getId(), timestamp);
 
-        if (lastRecording.isEmpty()) {
-            System.err.println("No recording found for camera " + camera.getId() + " before " + timestamp);
-            return;
-        }
+            if (lastRecording.isEmpty()) {
+                log.warn("No recording found for camera {} before {}. Skipping alert creation.", camera.getId(), timestamp);
+                return;
+            }
 
-        for (SafetyViolation violation : violations) {
-            String missingGearString = violation.missingGear().stream()
-                    .map(SafetyGearType::name)
-                    .collect(Collectors.joining(", "));
+            for (SafetyViolation violation : violations) {
+                String missingGearString = violation.missingGear().stream()
+                        .map(SafetyGearType::name)
+                        .collect(Collectors.joining(", "));
 
-            Alert alert = new Alert();
-            alert.setCamera(camera);
-            alert.setTimestamp(timestamp);
-            alert.setDescription("Missing safety gear: " + missingGearString);
-            alert.setImageUrl(snapshotFileName);
-            alert.setRecording(lastRecording.get());
-            alertRepository.save(alert);
-            System.out.println("Alert created for missing gear: " + missingGearString);
+                Alert alert = new Alert();
+                alert.setCamera(camera);
+                alert.setTimestamp(timestamp);
+                alert.setDescription("Missing safety gear: " + missingGearString);
+                alert.setImageUrl(snapshotFileName);
+                alert.setRecording(lastRecording.get());
+                alertRepository.save(alert);
+                log.info("Alert created for camera {} for missing gear: {}", camera.getId(), missingGearString);
+            }
+        } catch (S3OperationException e) { // IOException is no longer thrown here
+            log.error("Failed to upload snapshot or create alert for camera {}: {}", camera.getId(), e.getMessage(), e);
         }
     }
 }

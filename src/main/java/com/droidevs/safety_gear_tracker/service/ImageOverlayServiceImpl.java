@@ -9,6 +9,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 @Service
 public class ImageOverlayServiceImpl implements ImageOverlayService {
 
+    @Async("taskExecutor")
     @Override
     public byte[] drawViolationsOnImage(byte[] originalImage, List<SafetyViolation> violations) {
         Mat image;

@@ -15,6 +15,9 @@ public interface CameraRepository extends JpaRepository<Camera, Long>, JpaSpecif
 
     List<Camera> findByActiveTrueAndRecordingActiveTrue();
 
+    // Added method to find all active cameras
+    List<Camera> findAllByActiveTrue();
+
     @Query("SELECT c FROM Camera c LEFT JOIN c.zone z LEFT JOIN z.users u GROUP BY c ORDER BY COUNT(u) DESC")
     Page<Camera> findAllOrderByUserCountDesc(Specification<Camera> spec, Pageable pageable);
 

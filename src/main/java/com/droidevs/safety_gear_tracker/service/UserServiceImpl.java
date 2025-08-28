@@ -17,6 +17,7 @@ import com.droidevs.safety_gear_tracker.repository.RoleRepository;
 import com.droidevs.safety_gear_tracker.repository.UserRepository;
 import com.droidevs.safety_gear_tracker.repository.UserSpecification;
 import com.droidevs.safety_gear_tracker.repository.ZoneRepository;
+import com.droidevs.safety_gear_tracker.mapper.UserMapper; // Added this import
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

@@ -12,6 +12,7 @@ import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.PartMaker;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionService {
 
     private final GenerativeModel generativeModel;
@@ -36,8 +38,12 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
 
         try {
             return processFrameWithAI(imageData, camera);
-        } catch (GlobalBaseException | IOException e) {
-            System.err.println("Error during AI frame processing for camera " + camera.getId() + ": " + e.getMessage());
+        } catch (IOException | GlobalBaseException e) { // Corrected multi-catch statement
+            log.error("Error during AI frame processing for camera {}: {}", camera.getId(), e.getMessage(), e);
+            // Since this method is called within VideoProcessor (which is run by taskExecutor),
+            // re-throwing the exception will allow CustomTaskErrorHandler to catch it.
+            // For now, returning emptyList to prevent stopping the entire video stream on a single error.
+            // Depending on desired error propagation, this could be re-thrown.
             return Collections.emptyList();
         }
     }
@@ -65,10 +71,10 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
                 )
         );
         String textResponse = ResponseHandler.getText(response);
-        return parseViolationsJsonResponse(textResponse);
+        return parseViolationsJsonResponse(textResponse, camera.getId()); // Pass camera.getId()
     }
 
-    private List<SafetyViolation> parseViolationsJsonResponse(String jsonResponse) throws JsonParsingException {
+    private List<SafetyViolation> parseViolationsJsonResponse(String jsonResponse, Long cameraId) throws JsonParsingException { // Added cameraId parameter
         String cleanedJson = jsonResponse.replace("```json", "").replace("```", "").trim();
         List<SafetyViolation> violations = new ArrayList<>();
         try {
@@ -87,8 +93,8 @@ public class SafetyGearDetectionServiceImpl implements SafetyGearDetectionServic
                         String gearString = missingGearArray.getString(j).toUpperCase().replace(" ", "_");
                         missingGear.add(SafetyGearType.valueOf(gearString));
                     } catch (IllegalArgumentException e) {
-                        System.err.println("Warning: Model returned unknown safety gear type: " + missingGearArray.getString(j));
-                        // Decide whether to throw an exception here or continue. For now, we'll just log and skip.
+                        log.warn("Model returned unknown safety gear type for camera {}: {}", cameraId, missingGearArray.getString(j)); // Use cameraId
+                        // For now, we'll just log and skip unknown gear types.
                     }
                 }
 

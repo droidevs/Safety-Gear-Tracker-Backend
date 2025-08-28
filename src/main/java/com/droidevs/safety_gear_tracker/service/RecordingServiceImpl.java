@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.context.SecurityContextHolder; // Added import
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -31,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -92,14 +94,12 @@ public class RecordingServiceImpl implements RecordingService {
         if (!camera.isActive() || !camera.isRecordingActive() || activeRecordings.containsKey(camera.getId())) {
             return;
         }
-        // Submitting the actual recording logic to the async executor
-        // The Future returned here is from the @Async method execution
-        Future<?> future = (Future<?>) taskExecutor.execute(() -> startRecordingAsync(camera));
+        CompletableFuture<Void> future = startRecordingAsync(camera);
         activeRecordings.put(camera.getId(), future);
     }
 
     @Async("taskExecutor")
-    private void startRecordingAsync(Camera camera) {
+    private CompletableFuture<Void> startRecordingAsync(Camera camera) {
         try {
             while (cameraRepository.findById(camera.getId()).map(c -> c.isActive() && c.isRecordingActive()).orElse(false)) {
                 LocalDateTime now = LocalDateTime.now();
@@ -166,6 +166,7 @@ public class RecordingServiceImpl implements RecordingService {
         } finally {
             activeRecordings.remove(camera.getId());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     private Process startFFmpegRecording(String rtspUrl, String outputPath, int durationMinutes) throws VideoRecordingException {
@@ -186,17 +187,18 @@ public class RecordingServiceImpl implements RecordingService {
             builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            new Thread(() -> {
+            // Use the managed taskExecutor to consume the stream
+            taskExecutor.execute(() -> {
                 try (InputStream is = process.getInputStream()) {
                     byte[] buffer = new byte[1024];
                     while (is.read(buffer) != -1) {
                         // Consume the stream but don't print to avoid excessive logging
                     }
                 } catch (IOException e) {
-                    System.err.println("Error reading FFmpeg output: " + e.getMessage());
-                    // Log only, as this is a background thread and shouldn't stop the main recording process.
+                    // This will be caught by our CustomTaskErrorHandler
+                    throw new RuntimeException("Error reading FFmpeg output: " + e.getMessage(), e);
                 }
-            }).start();
+            });
 
             return process;
         } catch (IOException e) {
@@ -212,7 +214,7 @@ public class RecordingServiceImpl implements RecordingService {
         }
         Process ffmpegProcess = activeFFmpegProcesses.remove(cameraId);
         if (ffmpegProcess != null) {
-            ffmpegProcess.destroyForCibly();
+            ffmpegProcess.destroyForcibly();
         }
     }
 
@@ -227,9 +229,8 @@ public class RecordingServiceImpl implements RecordingService {
     }
 
     @Override
-    public Recording getRecordingById(Long id) {
-        return recordingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Recording not found with ID: " + id));
+    public Optional<Recording> getRecordingById(Long id) { // Changed return type to Optional<Recording>
+        return recordingRepository.findById(id);
     }
 
     @Override
