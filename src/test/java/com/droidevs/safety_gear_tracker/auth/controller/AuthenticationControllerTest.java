@@ -1,10 +1,6 @@
 package com.droidevs.safety_gear_tracker.auth.controller;
 
-import com.droidevs.safety_gear_tracker.auth.dtos.AuthenticationRequest;
-import com.droidevs.safety_gear_tracker.auth.dtos.AuthenticationResponse;
-import com.droidevs.safety_gear_tracker.auth.dtos.EmailVerificationRequest;
-import com.droidevs.safety_gear_tracker.auth.dtos.RegisterRequest;
-import com.droidevs.safety_gear_tracker.auth.dtos.ResetPasswordRequest;
+import com.droidevs.safety_gear_tracker.auth.dtos.*;
 import com.droidevs.safety_gear_tracker.auth.service.AuthenticationService;
 import com.droidevs.safety_gear_tracker.auth.service.WeeklyCodeService;
 import com.droidevs.safety_gear_tracker.model.Role;
@@ -24,6 +20,8 @@ import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -61,12 +59,12 @@ class AuthenticationControllerTest {
 
     @Test
     void register_shouldReturnOk_whenRegistrationIsSuccessful() throws Exception {
-        RegisterRequest request = new RegisterRequest(
-                "John",
-                "Doe",
-                "john.doe@example.com",
-                "password"
-        );
+        RegisterRequest request = RegisterRequest.builder()
+                .firstname("John")
+                .lastname("Doe")
+                .email("john.doe@example.com")
+                .password("password")
+                .build();
 
         AuthenticationResponse response = AuthenticationResponse.builder()
                 .token("token")
@@ -77,6 +75,7 @@ class AuthenticationControllerTest {
         when(authenticationService.register(any(RegisterRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/auth/register")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -85,10 +84,10 @@ class AuthenticationControllerTest {
 
     @Test
     void authenticate_shouldReturnOk_whenCredentialsAreValid() throws Exception {
-        AuthenticationRequest request = new AuthenticationRequest(
-                "john.doe@example.com",
-                "password"
-        );
+        AuthenticationRequest request = AuthenticationRequest.builder()
+                .email("john.doe@example.com")
+                .password("password")
+                .build();
 
         AuthenticationResponse response = AuthenticationResponse.builder()
                 .token("token")
@@ -99,6 +98,7 @@ class AuthenticationControllerTest {
         when(authenticationService.authenticate(any(AuthenticationRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/auth/authenticate")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -108,7 +108,7 @@ class AuthenticationControllerTest {
     @Test
     @WithMockUser(username = "john.doe@example.com")
     void isAuthenticated_authenticated() throws Exception {
-        mockMvc.perform(get("/api/v1/auth/is_authenticated"))
+        mockMvc.perform(get("/api/v1/auth/is_authenticated").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
     }
@@ -124,7 +124,7 @@ class AuthenticationControllerTest {
     @WithMockUser(username = "john.doe@example.com")
     void isVerified_verified() throws Exception {
         when(authenticationService.isUserVerified("john.doe@example.com")).thenReturn(true);
-        mockMvc.perform(get("/api/v1/auth/is_verified"))
+        mockMvc.perform(get("/api/v1/auth/is_verified").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
     }
@@ -132,7 +132,7 @@ class AuthenticationControllerTest {
     @Test
     @WithMockUser(username = "john.doe@example.com")
     void sendVerifyOtp_success() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/send-otp"))
+        mockMvc.perform(post("/api/v1/auth/send-otp").with(jwt()).with(csrf()))
                 .andExpect(status().isOk());
     }
 
@@ -141,6 +141,8 @@ class AuthenticationControllerTest {
     void verifyUser_success() throws Exception {
         EmailVerificationRequest request = new EmailVerificationRequest("123456");
         mockMvc.perform(post("/api/v1/auth/verify-otp")
+                        .with(jwt())
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -151,6 +153,8 @@ class AuthenticationControllerTest {
     void changePassword_success() throws Exception {
         ResetPasswordRequest request = new ResetPasswordRequest("oldPassword", "newPassword");
         mockMvc.perform(post("/api/v1/auth/change-password")
+                        .with(jwt())
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());

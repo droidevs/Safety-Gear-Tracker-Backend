@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
-@RequestMapping("/api/recordings")
+@RequestMapping("/recordings")
 @RequiredArgsConstructor
 public class RecordingController {
 

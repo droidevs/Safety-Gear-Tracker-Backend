@@ -10,7 +10,7 @@ import com.droidevs.safety_gear_tracker.service.StreamingService;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/stream")
+@RequestMapping("/stream")
 @RequiredArgsConstructor
 public class StreamingController {
 

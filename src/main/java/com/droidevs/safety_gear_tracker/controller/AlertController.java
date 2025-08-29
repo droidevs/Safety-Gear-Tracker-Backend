@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
-@RequestMapping("/api/alerts")
+@RequestMapping("/alerts")
 @RequiredArgsConstructor
 public class AlertController {
 

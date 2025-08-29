@@ -18,7 +18,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/cameras")
+@RequestMapping("/cameras")
 @RequiredArgsConstructor
 public class CameraController {
 
