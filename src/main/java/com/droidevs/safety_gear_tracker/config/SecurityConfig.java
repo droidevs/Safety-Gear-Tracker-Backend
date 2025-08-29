@@ -22,6 +22,8 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    public static final String API_PREFIX = "/api/v1";
+
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
@@ -34,7 +36,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(
-                                "/auth/**"
+                                API_PREFIX + "/auth/**"
                         ).permitAll()
                                 .anyRequest()
                                 .authenticated()

@@ -60,6 +60,7 @@ services:
       GEMINI_PROJECT_ID: your-google-cloud-project-id
       GEMINI_LOCATION: us-central1
       GEMINI_MODEL_NAME: gemini-2.5-pro
+      APPLICATION_SECURITY_JWT_REFRESH_TOKEN_EXPIRATION: 259200000
       APPLICATION_MAILING_FRONTEND_ACTIVATION_URL: http://localhost:4200/activate-account # Placeholder for frontend URL
 
 volumes:
