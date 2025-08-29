@@ -92,7 +92,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         
         if (request.email().equals(masterEmail)) {
             throw new IllegalArgumentException("Master user cannot log in through this endpoint.");

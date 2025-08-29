@@ -112,7 +112,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return isActiveByMaster; 
+        return true;
     }
 
     @Override
