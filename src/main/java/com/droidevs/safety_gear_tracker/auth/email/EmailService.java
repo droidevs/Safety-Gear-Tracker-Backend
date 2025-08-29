@@ -28,7 +28,7 @@ public class EmailService {
             Map<String, Object> properties,
             String fromAddress
     ) throws MessagingException {
-        String templateName = (emailTemplate != null) ? emailTemplate.name() : "confirm-email";
+        String templateName = (emailTemplate != null) ? emailTemplate.getName() : "confirm-email";
 
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(
