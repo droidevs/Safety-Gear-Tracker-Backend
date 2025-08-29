@@ -2,6 +2,7 @@ package com.droidevs.safety_gear_tracker.controller;
 
 import com.droidevs.safety_gear_tracker.dto.*;
 import com.droidevs.safety_gear_tracker.service.ZoneService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/zones")
 @RequiredArgsConstructor
+@Tag(name = "Zones")
 public class ZoneController {
 
     private final ZoneService zoneService;
@@ -29,19 +31,19 @@ public class ZoneController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ZoneDetailResponseDto> getZoneById(@PathVariable Long id) {
+    public ResponseEntity<ZoneDetailResponseDto> getZoneById(@PathVariable("id") Long id) {
         ZoneDetailResponseDto zone = zoneService.getZoneById(id);
         return new ResponseEntity<>(zone, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ZoneDetailResponseDto> updateZone(@PathVariable Long id, @Valid @RequestBody UpdateZoneRequestDto updateZoneRequestDto) {
+    public ResponseEntity<ZoneDetailResponseDto> updateZone(@PathVariable("id") Long id, @Valid @RequestBody UpdateZoneRequestDto updateZoneRequestDto) {
         ZoneDetailResponseDto updatedZone = zoneService.updateZone(id, updateZoneRequestDto);
         return new ResponseEntity<>(updatedZone, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteZone(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteZone(@PathVariable("id") Long id) {
         zoneService.deleteZone(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

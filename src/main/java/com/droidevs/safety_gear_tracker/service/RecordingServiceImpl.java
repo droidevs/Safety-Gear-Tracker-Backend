@@ -1,8 +1,10 @@
 package com.droidevs.safety_gear_tracker.service;
 
+import com.droidevs.safety_gear_tracker.dto.RecordingResponseDto;
 import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
 import com.droidevs.safety_gear_tracker.handler.exception.S3OperationException;
 import com.droidevs.safety_gear_tracker.handler.exception.VideoRecordingException;
+import com.droidevs.safety_gear_tracker.mappers.RecordingMapper;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.model.Recording;
 import com.droidevs.safety_gear_tracker.model.User;
@@ -18,7 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder; // Added import
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -44,6 +46,7 @@ public class RecordingServiceImpl implements RecordingService {
     private final CameraRepository cameraRepository;
     private final S3Service s3Service;
     private final RecordingRepository recordingRepository;
+    private final RecordingMapper recordingMapper;
     private final Executor taskExecutor; // Inject Spring's TaskExecutor
 
     @Value("${recording.duration.minutes:10}")
@@ -58,11 +61,11 @@ public class RecordingServiceImpl implements RecordingService {
     public RecordingServiceImpl(
             CameraRepository cameraRepository,
             S3Service s3Service,
-            RecordingRepository recordingRepository,
-            @Qualifier("taskExecutor") Executor taskExecutor) {
+            RecordingRepository recordingRepository, RecordingMapper recordingMapper, @Qualifier("taskExecutor") Executor taskExecutor) {
         this.cameraRepository = cameraRepository;
         this.s3Service = s3Service;
         this.recordingRepository = recordingRepository;
+        this.recordingMapper = recordingMapper;
         this.taskExecutor = taskExecutor;
     }
 
@@ -219,18 +222,19 @@ public class RecordingServiceImpl implements RecordingService {
     }
 
     @Override
-    public Page<Recording> getAllRecordings(int page, int size) {
+    public Page<RecordingResponseDto> getAllRecordings(int page, int size) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Long> cameraIds = user.getZones().stream()
                 .flatMap(zone -> zone.getCameras().stream())
                 .map(Camera::getId)
                 .collect(Collectors.toList());
-        return recordingRepository.findByCameraIdIn(cameraIds, PageRequest.of(page, size));
+        Page<Recording> recordingPage = recordingRepository.findByCameraIdIn(cameraIds, PageRequest.of(page, size));
+        return recordingPage.map(recordingMapper::toDto);
     }
 
     @Override
-    public Optional<Recording> getRecordingById(Long id) { // Changed return type to Optional<Recording>
-        return recordingRepository.findById(id);
+    public Optional<RecordingResponseDto> getRecordingById(Long id) {
+        return recordingRepository.findById(id).map(recordingMapper::toDto);
     }
 
     @Override

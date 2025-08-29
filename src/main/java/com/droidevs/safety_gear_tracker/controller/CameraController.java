@@ -7,6 +7,7 @@ import com.droidevs.safety_gear_tracker.dto.CameraSummaryPagingResponseDto;
 import com.droidevs.safety_gear_tracker.dto.UpdateCameraRequestDto;
 import com.droidevs.safety_gear_tracker.service.CameraService;
 import com.droidevs.safety_gear_tracker.service.VideoProcessingService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/cameras")
 @RequiredArgsConstructor
+@Tag(name = "Cameras")
 public class CameraController {
 
     private final CameraService cameraService;
@@ -32,7 +34,7 @@ public class CameraController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCameraById(@PathVariable Long id) {
+    public ResponseEntity<?> getCameraById(@PathVariable("id") Long id) {
         Optional<?> camera = cameraService.getCameraById(id);
         return camera.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -45,20 +47,20 @@ public class CameraController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CameraResponseDto> updateCamera(@PathVariable Long id, @Valid @RequestBody UpdateCameraRequestDto camera) {
+    public ResponseEntity<CameraResponseDto> updateCamera(@PathVariable("id") Long id, @Valid @RequestBody UpdateCameraRequestDto camera) {
         Optional<CameraResponseDto> updatedCamera = cameraService.updateCamera(id, camera);
         return updatedCamera.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCamera(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCamera(@PathVariable("id") Long id) {
         cameraService.deleteCamera(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping(value = "/{id}/feed", produces = org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public Flux<byte[]> getCameraFeed(@PathVariable Long id) {
+    public Flux<byte[]> getCameraFeed(@PathVariable("id") Long id) {
         return videoProcessingService
         .getCameraFeed(id)
         .delayElements(Duration.ofMillis(60));

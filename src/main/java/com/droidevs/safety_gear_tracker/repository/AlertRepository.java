@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AlertRepository extends JpaRepository<Alert, Long> {
-    Page<Alert> findByCameraZoneIdIn(List<Long> zoneIds, Pageable pageable);
+    Page<Alert> findByCameraIdIn(List<Long> cameraIds, Pageable pageable);
 }

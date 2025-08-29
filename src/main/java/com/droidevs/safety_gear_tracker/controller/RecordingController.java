@@ -1,7 +1,9 @@
 package com.droidevs.safety_gear_tracker.controller;
 
-import com.droidevs.safety_gear_tracker.model.Recording;
+import com.droidevs.safety_gear_tracker.dto.RecordingPagingResponseDto;
+import com.droidevs.safety_gear_tracker.dto.RecordingResponseDto;
 import com.droidevs.safety_gear_tracker.service.RecordingService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
@@ -14,26 +16,27 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RestController
 @RequestMapping("/recordings")
 @RequiredArgsConstructor
+@Tag(name = "Recordings")
 public class RecordingController {
 
     private final RecordingService recordingService;
 
     @GetMapping
-    public ResponseEntity<Page<Recording>> getAllRecordings(@RequestParam(defaultValue = "0") int page,
-                                                          @RequestParam(defaultValue = "10") int size) {
-        Page<Recording> recordings = recordingService.getAllRecordings(page, size);
-        return ResponseEntity.ok(recordings);
+    public ResponseEntity<RecordingPagingResponseDto> getAllRecordings(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                                         @RequestParam(name = "size", defaultValue = "10") int size) {
+        Page<RecordingResponseDto> recordings = recordingService.getAllRecordings(page, size);
+        return ResponseEntity.ok(new RecordingPagingResponseDto(recordings));
     }
 
     @GetMapping("/{recordingId}")
-    public ResponseEntity<Recording> getRecordingById(@PathVariable Long recordingId) {
+    public ResponseEntity<RecordingResponseDto> getRecordingById(@PathVariable("recordingId") Long recordingId) {
         return recordingService.getRecordingById(recordingId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{recordingId}/file")
-    public ResponseEntity<byte[]> getRecordingFile(@PathVariable Long recordingId) {
+    public ResponseEntity<byte[]> getRecordingFile(@PathVariable("recordingId") Long recordingId) {
         byte[] file = recordingService.getRecordingFile(recordingId);
         if (file != null) {
             // Assuming video files are typically MP4, adjust if other formats are expected
@@ -44,7 +47,7 @@ public class RecordingController {
     }
 
     @GetMapping("/{recordingId}/stream")
-    public ResponseEntity<StreamingResponseBody> streamRecordingFile(@PathVariable Long recordingId) {
+    public ResponseEntity<StreamingResponseBody> streamRecordingFile(@PathVariable("recordingId") Long recordingId) {
         InputStreamResource stream = recordingService.getRecordingFileStream(recordingId);
         if (stream != null) {
             return ResponseEntity.ok()
@@ -56,7 +59,7 @@ public class RecordingController {
     }
 
     @DeleteMapping("/{recordingId}")
-    public ResponseEntity<Void> deleteRecording(@PathVariable Long recordingId) {
+    public ResponseEntity<Void> deleteRecording(@PathVariable("recordingId") Long recordingId) {
         recordingService.deleteRecording(recordingId);
         return ResponseEntity.noContent().build();
     }

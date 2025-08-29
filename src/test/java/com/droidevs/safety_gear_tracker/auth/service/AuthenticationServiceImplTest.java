@@ -151,7 +151,7 @@ class AuthenticationServiceImplTest {
         AuthenticationRequest request = new AuthenticationRequest("nonexistent@example.com", "password");
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> authenticationService.authenticate(request));
+        assertThrows(UserNotFoundException.class, () -> authenticationService.authenticate(request));
         verify(authenticationManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 

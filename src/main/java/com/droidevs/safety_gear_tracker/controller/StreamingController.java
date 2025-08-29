@@ -1,17 +1,19 @@
 package com.droidevs.safety_gear_tracker.controller;
 
+import com.droidevs.safety_gear_tracker.service.StreamingService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.droidevs.safety_gear_tracker.service.StreamingService;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/stream")
 @RequiredArgsConstructor
+@Tag(name = "Streaming")
 public class StreamingController {
 
     private final StreamingService streamingService;
