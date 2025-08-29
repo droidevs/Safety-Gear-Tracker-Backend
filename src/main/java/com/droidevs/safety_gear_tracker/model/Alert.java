@@ -1,33 +1,32 @@
 package com.droidevs.safety_gear_tracker.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "alerts")
 public class Alert {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String cameraName;
+    private String description;
+    private LocalDateTime timestamp;
+    private String screenshotUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "camera_id")
     private Camera camera;
 
-    private LocalDateTime timestamp;
-    private String description;
-    private String imageUrl;
-    private String cameraName;
-    private String screenshotUrl;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recording_id")
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "recording_id", referencedColumnName = "id")
     private Recording recording;
 }

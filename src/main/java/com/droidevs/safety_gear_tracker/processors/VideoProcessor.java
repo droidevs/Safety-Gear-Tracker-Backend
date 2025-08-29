@@ -9,7 +9,6 @@ import com.droidevs.safety_gear_tracker.model.SafetyGearType;
 import com.droidevs.safety_gear_tracker.repository.AlertRepository;
 import com.droidevs.safety_gear_tracker.repository.RecordingRepository;
 import com.droidevs.safety_gear_tracker.service.ImageOverlayService;
-import com.droidevs.safety_gear_tracker.service.RecordingService;
 import com.droidevs.safety_gear_tracker.service.S3Service;
 import com.droidevs.safety_gear_tracker.service.SafetyGearDetectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +34,6 @@ public class VideoProcessor implements Runnable {
     private final SafetyGearDetectionService safetyGearDetectionService;
     private final AlertRepository alertRepository;
     private final S3Service s3Service;
-    private final RecordingService recordingService;
     private final RecordingRepository recordingRepository;
     private final ImageOverlayService imageOverlayService;
     private final Flux<byte[]> frameFlux;
@@ -44,12 +42,11 @@ public class VideoProcessor implements Runnable {
     private volatile boolean running = true;
     private static final int FRAME_SKIP_AI = 30;
 
-    public VideoProcessor(Camera camera, SafetyGearDetectionService safetyGearDetectionService, AlertRepository alertRepository, S3Service s3Service, RecordingService recordingService, RecordingRepository recordingRepository, ImageOverlayService imageOverlayService) {
+    public VideoProcessor(Camera camera, SafetyGearDetectionService safetyGearDetectionService, AlertRepository alertRepository, S3Service s3Service, RecordingRepository recordingRepository, ImageOverlayService imageOverlayService) {
         this.camera = camera;
         this.safetyGearDetectionService = safetyGearDetectionService;
         this.alertRepository = alertRepository;
         this.s3Service = s3Service;
-        this.recordingService = recordingService;
         this.recordingRepository = recordingRepository;
         this.imageOverlayService = imageOverlayService;
         this.frameFlux = Flux.<byte[]>create(sink -> this.frameSink = sink)
@@ -144,7 +141,7 @@ public class VideoProcessor implements Runnable {
                 alert.setCamera(camera);
                 alert.setTimestamp(timestamp);
                 alert.setDescription("Missing safety gear: " + missingGearString);
-                alert.setImageUrl(snapshotFileName);
+                alert.setScreenshotUrl(snapshotFileName);
                 alert.setRecording(lastRecording.get());
                 alertRepository.save(alert);
                 log.info("Alert created for camera {} for missing gear: {}", camera.getId(), missingGearString);

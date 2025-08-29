@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,6 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
     private final SafetyGearDetectionService safetyGearDetectionService;
     private final AlertRepository alertRepository;
     private final S3Service s3Service;
-    private final RecordingService recordingService;
     private final RecordingRepository recordingRepository;
     private final ImageOverlayService imageOverlayService;
     private final CameraRepository cameraRepository;
@@ -49,7 +47,6 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
         this.safetyGearDetectionService = safetyGearDetectionService;
         this.alertRepository = alertRepository;
         this.s3Service = s3Service;
-        this.recordingService = recordingService;
         this.recordingRepository = recordingRepository;
         this.imageOverlayService = imageOverlayService;
         this.cameraRepository = cameraRepository;
@@ -120,9 +117,9 @@ public class VideoProcessingServiceImpl implements VideoProcessingService {
                     safetyGearDetectionService,
                     alertRepository,
                     s3Service,
-                    recordingService,
                     recordingRepository,
-                    imageOverlayService);
+                    imageOverlayService
+                    );
             activeProcessors.put(camera.getId(), processor);
             taskExecutor.execute(processor);
             log.info("Started video processing for camera: {}", camera.getId());

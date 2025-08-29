@@ -11,17 +11,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "app_user")
 public class User implements UserDetails {
 
     @Id
@@ -29,6 +29,7 @@ public class User implements UserDetails {
     private Long id;
     private String firstname;
     private String lastname;
+    @Column(unique = true)
     private String email;
     private String password;
     private boolean weeklyCodeVerified;
@@ -36,10 +37,14 @@ public class User implements UserDetails {
     private LocalDateTime lastPasswordChange;
     private String profilePictureUrl;
     private Integer zoneCount;
-    private boolean isActiveByMaster; // Replaced 'locked' with 'isActiveByMaster'
+    private boolean isActiveByMaster; 
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+    
+    @LastModifiedDate
+    @Column(insertable = false)
+    private LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -65,23 +70,12 @@ public class User implements UserDetails {
     private List<WeeklyCode> weeklyCodes;
 
 
-    public User(String firstname, String lastname, String email, String password, Set<Role> roles) {
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.email = email;
-        this.password = password;
-        this.roles = roles;
-        this.otpVerified = false; // Default for new users
-        this.weeklyCodeVerified = false; // Default for new users
-        this.isActiveByMaster = false; // Default for new users
-    }
-
     public String getFullName() {
         return firstname + " " + lastname;
     }
 
     public boolean isActive() {
-        return otpVerified && weeklyCodeVerified && isActiveByMaster; // Updated to use otpVerified and isActiveByMaster
+        return otpVerified && weeklyCodeVerified && isActiveByMaster;
     }
 
     @PrePersist
@@ -105,6 +99,11 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
+    
+    @Override
+    public String getPassword() {
+        return password;
+    }
 
     @Override
     public boolean isAccountNonExpired() {
@@ -113,7 +112,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return isActiveByMaster; // Updated to use isActiveByMaster
+        return isActiveByMaster; 
     }
 
     @Override
@@ -123,6 +122,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return otpVerified; // Updated to use otpVerified
+        return otpVerified;
     }
 }

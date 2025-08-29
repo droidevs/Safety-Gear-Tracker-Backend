@@ -1,14 +1,8 @@
 package com.droidevs.safety_gear_tracker.auth.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
 
-@Builder
-public record AuthenticationResponse(
-    @JsonProperty("token")
-    String token,
-    @JsonProperty("expires_in")
-    long expiresIn,
+public record RefreshTokenRequest(
     @JsonProperty("refresh_token")
     String refreshToken
 ) {

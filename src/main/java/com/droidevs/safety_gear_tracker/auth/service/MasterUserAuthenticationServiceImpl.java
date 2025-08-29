@@ -46,6 +46,6 @@ public class MasterUserAuthenticationServiceImpl implements MasterUserAuthentica
         
         String jwtToken = jwtService.generateToken(claims, user);
 
-        return new AuthenticationResponse(jwtToken, jwtService.getJwtSecretInfo().getExpirationTime());
+        return new AuthenticationResponse(jwtToken, jwtService.getJwtSecretInfo().getExpirationTime(), null);
     }
 }

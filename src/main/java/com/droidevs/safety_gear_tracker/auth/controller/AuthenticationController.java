@@ -64,6 +64,20 @@ public class AuthenticationController {
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(response);
     }
+    
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthenticationResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request) {
+        return ResponseEntity.ok(service.refreshToken(request));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal String email) {
+        if (email == null) {
+            throw new UserNotFoundException("User not authenticated");
+        }
+        service.logout(email);
+        return ResponseEntity.ok("Logged out successfully");
+    }
 
 
     @PostMapping("/send-otp")
@@ -101,21 +115,18 @@ public class AuthenticationController {
         return ResponseEntity.ok("Daily code validated successfully.");
     }
 
-
-    @PostMapping("/send-reset-otp")
-    public void sendResetOtp(
-            @RequestBody @Valid String email
-    ){
-
-        //TODO
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) throws MessagingException {
+        service.forgotPassword(request);
+        return ResponseEntity.ok("Password reset OTP sent to your email");
     }
-
-    @PostMapping("/reset-password")
-    public void resetPassword(
+    
+    @PostMapping("/change-password")
+    public void changePassword(
             @RequestBody @Valid ResetPasswordRequest request,
             @AuthenticationPrincipal String email
     ){
-        service.resetPassword(request, email);
+        service.changePassword(request, email);
     }
 
     @PostMapping("/reset-password-otp")

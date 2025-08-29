@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface OtpRepository extends JpaRepository<Otp, Long> {
-    Optional<Otp> findByUserAndOtp(User user, String otp);
-    Optional<Otp> findByUser(User user);
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
+    Optional<RefreshToken> findByToken(String token);
+    void deleteByUser(User user);
 }

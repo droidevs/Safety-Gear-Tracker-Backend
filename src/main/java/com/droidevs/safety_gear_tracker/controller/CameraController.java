@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.Optional;
 
 @RestController
@@ -58,6 +59,8 @@ public class CameraController {
 
     @GetMapping(value = "/{id}/feed", produces = org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public Flux<byte[]> getCameraFeed(@PathVariable Long id) {
-        return videoProcessingService.getCameraFeed(id);
+        return videoProcessingService
+        .getCameraFeed(id)
+        .delayElements(Duration.ofMillis(60));
     }
 }

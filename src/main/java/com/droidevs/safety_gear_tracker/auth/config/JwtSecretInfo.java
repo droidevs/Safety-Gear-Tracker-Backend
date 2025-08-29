@@ -1,12 +1,14 @@
 package com.droidevs.safety_gear_tracker.auth.config;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Component
-@Getter
-@Setter
 public class JwtSecretInfo {
     private String secretKey;
     private long expirationTime;

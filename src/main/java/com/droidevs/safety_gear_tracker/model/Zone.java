@@ -2,16 +2,16 @@ package com.droidevs.safety_gear_tracker.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
-
 import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "zones")
 public class Zone {
@@ -19,34 +19,36 @@ public class Zone {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Zone name cannot be blank")
     private String name;
-
+    
     private String description;
 
+    @Column(name = "user_count")
     private Integer userCount;
+
+    @Column(name = "camera_count")
     private Integer cameraCount;
 
-    @ManyToMany(mappedBy = "zones", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "zones")
     @JsonIgnore
     private Set<User> users;
 
-    @OneToMany(mappedBy = "zone", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "zone")
     @JsonIgnore
     private Set<Camera> cameras;
 
     @PrePersist
     @PreUpdate
-    public void updateCounts() {
-        if (users == null) {
-            this.userCount = 0;
+    private void updateCounts() {
+        if (users != null) {
+            userCount = users.size();
         } else {
-            this.userCount = this.users.size();
+            userCount = 0;
         }
-        if (cameras == null) {
-            this.cameraCount = 0;
+        if (cameras != null) {
+            cameraCount = cameras.size();
         } else {
-            this.cameraCount = this.cameras.size();
+            cameraCount = 0;
         }
     }
 }
