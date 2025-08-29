@@ -52,7 +52,7 @@ services:
       SPRING_MAIL_PASSWORD: your-email-password
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: true
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: true
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST: smtp.gmail.com
+      # SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST: smtp.gmail.com # Removed as not needed for Maildev
       MASTER_USER_EMAIL: master@droidevs.com
       MASTER_USER_PASSWORD: MasterPassword123
       MASTER_USER_FIRSTNAME: Master
@@ -60,6 +60,7 @@ services:
       GEMINI_PROJECT_ID: your-google-cloud-project-id
       GEMINI_LOCATION: us-central1
       GEMINI_MODEL_NAME: gemini-2.5-pro
+      APPLICATION_MAILING_FRONTEND_ACTIVATION_URL: http://localhost:4200/activate-account # Placeholder for frontend URL
 
 volumes:
   postgres_data:
