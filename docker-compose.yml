@@ -4,9 +4,9 @@ services:
   postgres:
     image: postgres:13
     environment:
-      POSTGRES_DB: your_database_name
-      POSTGRES_USER: your_username
-      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: safety_gear_tracker_db
+      POSTGRES_USER: safety_user
+      POSTGRES_PASSWORD: safety_password
     ports:
       - "5432:5432"
     volumes:
@@ -39,9 +39,9 @@ services:
       - minio
       - maildev
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/your_database_name
-      SPRING_DATASOURCE_USERNAME: your_username
-      SPRING_DATASOURCE_PASSWORD: your_password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/safety_gear_tracker_db
+      SPRING_DATASOURCE_USERNAME: safety_user
+      SPRING_DATASOURCE_PASSWORD: safety_password
       AWS_S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_KEY: minioadmin
