@@ -48,6 +48,11 @@ services:
       AWS_S3_BUCKET: alerts
       SPRING_MAIL_HOST: maildev
       SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_USERNAME: your-email@example.com
+      SPRING_MAIL_PASSWORD: your-email-password
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: true
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: true
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST: smtp.gmail.com
       MASTER_USER_EMAIL: master@droidevs.com
       MASTER_USER_PASSWORD: MasterPassword123
       MASTER_USER_FIRSTNAME: Master
