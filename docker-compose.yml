@@ -46,7 +46,7 @@ services:
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_KEY: minioadmin
       AWS_S3_BUCKET: alerts
-      SPRING_MAIL_HOST: maildev
+      SPRING_MAIL_HOST: localhost
       SPRING_MAIL_PORT: 1025
       SPRING_MAIL_USERNAME: your-email@example.com
       SPRING_MAIL_PASSWORD: your-email-password
