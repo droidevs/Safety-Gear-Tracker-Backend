@@ -52,9 +52,9 @@ services:
       MASTER_USER_PASSWORD: MasterPassword123
       MASTER_USER_FIRSTNAME: Master
       MASTER_USER_LASTNAME: User
-      GEMINI_PROJECT_ID: ${GEMINI_PROJECT_ID}
-      GEMINI_LOCATION: ${GEMINI_LOCATION}
-      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME}
+      GEMINI_PROJECT_ID: your-google-cloud-project-id
+      GEMINI_LOCATION: us-central1
+      GEMINI_MODEL_NAME: gemini-2.5-pro
 
 volumes:
   postgres_data:
