@@ -12,13 +12,14 @@ import java.io.IOException;
 public class GenerativeAiConfig {
 
     @Bean
-    public GenerativeModel generativeModel(
-            @Value("${gemini.project.id}") String projectId,
-            @Value("${gemini.location}") String location,
-            @Value("${gemini.model.name}") String modelName) throws IOException {
-        
-        try (VertexAI vertexAI = new VertexAI(projectId, location)) {
-            return new GenerativeModel(modelName, vertexAI);
-        }
+    public VertexAI vertexAI(@Value("${gemini.project.id}") String projectId,
+                             @Value("${gemini.location}") String location) throws IOException {
+        return new VertexAI(projectId, location);
+    }
+
+    @Bean
+    public GenerativeModel generativeModel(@Value("${gemini.model.name}") String modelName,
+                                           VertexAI vertexAI) {
+        return new GenerativeModel(modelName, vertexAI);
     }
 }
