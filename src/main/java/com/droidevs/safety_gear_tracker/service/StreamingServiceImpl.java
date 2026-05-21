@@ -6,9 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.droidevs.safety_gear_tracker.model.Camera;
 import com.droidevs.safety_gear_tracker.repository.CameraRepository;
@@ -27,14 +30,17 @@ public class StreamingServiceImpl implements StreamingService {
     private final CameraRepository cameraRepository;
 
     private final ConcurrentHashMap<Long, Process> streamingProcesses = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Long> lastAccessTimes = new ConcurrentHashMap<>();
 
     @Override
     public Mono<Resource> getManifest(Long cameraId) {
+        lastAccessTimes.put(cameraId, System.currentTimeMillis());
         return startStreaming(cameraId).then(getResource(getManifestPath(cameraId)));
     }
 
     @Override
     public Mono<Resource> getSegment(Long cameraId, String segment) {
+        lastAccessTimes.put(cameraId, System.currentTimeMillis());
         return getResource(getSegmentPath(cameraId, segment));
     }
 
@@ -65,19 +71,14 @@ public class StreamingServiceImpl implements StreamingService {
                         outputDir.resolve("index.m3u8").toString()
                 );
 
+                processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+                processBuilder.redirectError(ProcessBuilder.Redirect.DISCARD);
+
                 Process process = processBuilder.start();
                 streamingProcesses.put(cameraId, process);
+                lastAccessTimes.put(cameraId, System.currentTimeMillis());
 
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    process.destroy();
-                    try {
-                        Files.walk(outputDir)
-                                .map(Path::toFile)
-                                .forEach(File::delete);
-                    } catch (IOException e) {
-                        logger.error("Error cleaning up streaming directory on shutdown for camera {}: {}", cameraId, e.getMessage());
-                    }
-                }));
+                logger.info("Started streaming for camera ID: {} on path {}", cameraId, outputDir);
 
             } catch (IOException e) {
                 throw new StreamingException("Failed to start streaming for camera " + cameraId, e);
@@ -96,6 +97,50 @@ public class StreamingServiceImpl implements StreamingService {
         } catch (IOException e) {
             throw new StreamingException("Error accessing stream resource at path: " + path, e);
         }
+    }
+
+    private void stopStreaming(Long cameraId) {
+        Process process = streamingProcesses.remove(cameraId);
+        if (process != null) {
+            logger.info("Stopping stream for camera ID: {}", cameraId);
+            process.destroy();
+            try {
+                if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                    process.destroyForcibly();
+                }
+            } catch (InterruptedException e) {
+                process.destroyForcibly();
+                Thread.currentThread().interrupt();
+            }
+        }
+        lastAccessTimes.remove(cameraId);
+        Path outputDir = getOutputDir(cameraId);
+        if (Files.exists(outputDir)) {
+            try (var stream = Files.walk(outputDir)) {
+                stream.sorted(java.util.Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            } catch (IOException e) {
+                logger.error("Error cleaning up streaming directory for camera {}: {}", cameraId, e.getMessage());
+            }
+        }
+    }
+
+    @Scheduled(fixedDelay = 10000)
+    public void cleanupInactiveStreams() {
+        long now = System.currentTimeMillis();
+        lastAccessTimes.forEach((cameraId, lastAccessTime) -> {
+            if (now - lastAccessTime > 60000) {
+                logger.info("Camera ID: {} has been inactive for > 60s. Terminating stream.", cameraId);
+                stopStreaming(cameraId);
+            }
+        });
+    }
+
+    @PreDestroy
+    public void shutdownAllStreams() {
+        logger.info("Shutting down all active streams due to context destruction.");
+        streamingProcesses.keySet().forEach(this::stopStreaming);
     }
 
     private Path getOutputDir(Long cameraId) {
