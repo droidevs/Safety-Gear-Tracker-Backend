@@ -56,7 +56,7 @@ public class StreamingServiceImpl implements StreamingService {
                 ProcessBuilder processBuilder = new ProcessBuilder(
                         "ffmpeg",
                         "-i", rtspUrl,
-                        "-c:v", "libx24",
+                        "-c:v", "libx264",
                         "-c:a", "aac",
                         "-f", "hls",
                         "-hls_time", "10",

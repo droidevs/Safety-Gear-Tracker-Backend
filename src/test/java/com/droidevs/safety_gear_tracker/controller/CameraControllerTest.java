@@ -24,6 +24,7 @@ import java.util.Set;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -75,7 +76,7 @@ class CameraControllerTest {
     void getCameraById_shouldReturnCamera() throws Exception {
         Long cameraId = 1L;
         CameraFullResponseDto responseDto = new CameraFullResponseDto(cameraId, "Test Camera", "192.168.1.1", 8080, "admin", "password", true, false, 1L, Collections.emptyList());
-        when(cameraService.getCameraById(cameraId)).thenReturn(Optional.of(responseDto));
+        doReturn(Optional.of(responseDto)).when(cameraService).getCameraById(cameraId);
 
         mockMvc.perform(get("/cameras/{id}", cameraId))
                 .andExpect(status().isOk());

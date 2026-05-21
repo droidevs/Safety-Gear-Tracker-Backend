@@ -16,7 +16,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"zones", "weeklyCodes", "otps"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -123,5 +125,18 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return otpVerified;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

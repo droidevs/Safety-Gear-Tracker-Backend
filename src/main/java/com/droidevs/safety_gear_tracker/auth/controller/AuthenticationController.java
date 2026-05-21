@@ -82,24 +82,17 @@ public class AuthenticationController {
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendVerifyOtp(
-            @AuthenticationPrincipal String email
+            @RequestBody @Valid SendOtpRequest request
     ) throws MessagingException {
-        if (email == null) {
-            throw new UserNotFoundException("User not authenticated");
-        }
-        service.sendOtp(email);
+        service.sendOtp(request.email());
         return ResponseEntity.ok("Verification code sent");
     }
     
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyUser(
-            @RequestBody @Valid EmailVerificationRequest verifyUserRequest,
-            @AuthenticationPrincipal String email
+            @RequestBody @Valid EmailVerificationRequest verifyUserRequest
     ) throws MessagingException {
-        if (email == null) {
-            throw new UserNotFoundException("User not authenticated");
-        }
-        service.verifyUser(email, verifyUserRequest.otp());
+        service.verifyUser(verifyUserRequest.email(), verifyUserRequest.otp());
         return ResponseEntity.ok("Account verified successfully");
     }
     
