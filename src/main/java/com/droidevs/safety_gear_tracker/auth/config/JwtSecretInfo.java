@@ -1,15 +1,21 @@
 package com.droidevs.safety_gear_tracker.auth.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+/**
+ * BUG-08 FIX: Original class had plain fields with no @Value bindings.
+ * getSecretKey() returned null → Keys.hmacShaKeyFor(null) → NPE.
+ * Solution: bind both fields from application.properties via @Value.
+ */
+@Getter
 @Component
 public class JwtSecretInfo {
+
+    @Value("${application.security.jwt.secret-key}")
     private String secretKey;
+
+    @Value("${application.security.jwt.expiration}")
     private long expirationTime;
 }
