@@ -5,10 +5,14 @@ import jakarta.persistence.*;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"users", "cameras"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -50,5 +54,18 @@ public class Zone {
         } else {
             cameraCount = 0;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Zone)) return false;
+        Zone zone = (Zone) o;
+        return id != null && id.equals(zone.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

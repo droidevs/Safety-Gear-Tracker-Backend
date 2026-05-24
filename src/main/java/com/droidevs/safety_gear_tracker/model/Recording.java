@@ -5,13 +5,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"camera", "alerts"})
 @Entity
 @Table(name = "recordings")
 public class Recording {
@@ -28,4 +33,17 @@ public class Recording {
 
     @OneToMany(mappedBy = "recording")
     private List<Alert> alerts;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Recording recording = (Recording) o;
+        return id != null && id.equals(recording.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
