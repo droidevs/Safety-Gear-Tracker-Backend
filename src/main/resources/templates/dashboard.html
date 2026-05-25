@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Safety Gear Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="layout">
+  <header class="topbar">
+    <a href="/ui/dashboard" class="topbar-brand">SGT <span>// Safety Gear Tracker</span></a>
+    <div class="topbar-spacer"></div>
+    <span class="topbar-user">System monitor</span>
+    <a href="#" id="logout-btn" class="btn-logout">Sign out</a>
+  </header>
+  <nav class="sidebar" th:replace="~{fragments/layout :: sidebar}"></nav>
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Dashboard</h1>
+      <span class="page-subtitle">Real-time safety overview</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card info">
+        <div class="stat-value" id="dash-cameras">—</div>
+        <div class="stat-label">Total cameras</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-value" id="dash-alerts">—</div>
+        <div class="stat-label">Total alerts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="dash-zones">—</div>
+        <div class="stat-label">Zones</div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-value" id="dash-status">ON</div>
+        <div class="stat-label">System status</div>
+      </div>
+    </div>
+
+    <!-- Recent alerts -->
+    <div class="card">
+      <div class="card-title">Recent alerts</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Camera</th>
+            <th>Time</th>
+            <th>Description</th>
+          </tr>
+          </thead>
+          <tbody id="recent-alerts-body">
+          <tr>
+            <td colspan="4" style="text-align:center;color:var(--text-hint);padding:24px">Loading…</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;">
+        <a href="/ui/alerts" class="btn btn-ghost btn-sm">View all alerts →</a>
+      </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="card">
+      <div class="card-title">Quick actions</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="/ui/cameras/add" class="btn btn-primary">Add camera</a>
+        <a href="/ui/zones/add"   class="btn btn-ghost">Create zone</a>
+        <a href="/ui/users"       class="btn btn-ghost">Manage users</a>
+        <a href="/swagger-ui/index.html" class="btn btn-ghost" target="_blank">API docs ↗</a>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

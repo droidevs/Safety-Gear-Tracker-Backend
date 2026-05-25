@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — Safety Gear Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">⬛ SGT</div>
+    <div class="auth-tagline">Safety Gear Tracker // Industrial Monitor</div>
+    <h1 class="auth-title">Sign in</h1>
+
+    <!-- Flash from server (e.g. after registration) -->
+    <div th:if="${flash}" th:class="'flash flash-' + ${flashType}" th:text="${flash}"></div>
+
+    <div id="login-error" class="flash flash-error" style="display:none" th:style="${error} ? '' : 'display:none'" th:text="${error}"></div>
+
+    <form id="login-form" autocomplete="on">
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input class="form-control" type="email" id="email" name="email"
+               placeholder="you@example.com" required autocomplete="username"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-control" type="password" id="password" name="password"
+               placeholder="••••••••" required autocomplete="current-password"/>
+      </div>
+
+      <div class="form-group flex-center gap-8" style="margin-bottom: 20px;">
+        <input type="checkbox" id="master-toggle" style="accent-color: var(--accent); cursor:pointer;"/>
+        <label for="master-toggle" style="font-size:12px;color:var(--text-muted);cursor:pointer;user-select:none;">
+          Sign in as master user
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">Sign in</button>
+    </form>
+
+    <div class="auth-footer">
+      No account? <a href="/ui/register">Register here</a>
+      &nbsp;·&nbsp;
+      <a href="/ui/forgot-password">Forgot password?</a>
+    </div>
+  </div>
+</div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

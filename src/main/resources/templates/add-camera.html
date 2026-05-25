@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Camera — Safety Gear Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="layout">
+  <header class="topbar">
+    <a href="/ui/dashboard" class="topbar-brand">SGT <span>// Add Camera</span></a>
+    <div class="topbar-spacer"></div>
+    <a href="#" id="logout-btn" class="btn-logout">Sign out</a>
+  </header>
+  <nav class="sidebar">
+    <div class="nav-section">
+      <a href="/ui/dashboard" class="nav-link"><span class="nav-icon">⬛</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Monitoring</div>
+      <a href="/ui/cameras" class="nav-link active"><span class="nav-icon">📷</span> Cameras</a>
+      <a href="/ui/alerts"  class="nav-link"><span class="nav-icon">🚨</span> Alerts</a>
+      <a href="/ui/recordings" class="nav-link"><span class="nav-icon">🎬</span> Recordings</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Management</div>
+      <a href="/ui/zones" class="nav-link"><span class="nav-icon">🗺</span> Zones</a>
+      <a href="/ui/users" class="nav-link"><span class="nav-icon">👤</span> Users</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <a href="/ui/profile" class="nav-link"><span class="nav-icon">⚙</span> My Profile</a>
+      <a href="/ui/weekly-code" class="nav-link"><span class="nav-icon">🔑</span> Weekly Code</a>
+    </div>
+  </nav>
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Add camera</h1>
+      <span class="page-subtitle">Configure a new RTSP endpoint</span>
+    </div>
+
+    <div class="card" style="max-width:720px;">
+      <form id="camera-form">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Camera name</label>
+            <input class="form-control" type="text" name="cameraName" required placeholder="Warehouse entrance"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Zone</label>
+            <select class="form-control" id="zone-select">
+              <option value="">Select a zone…</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">IP address</label>
+            <input class="form-control" type="text" name="ipAddress" required placeholder="192.168.1.100"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Port</label>
+            <input class="form-control" type="number" name="port" required placeholder="8080" value="554"/>
+          </div>
+          <div class="form-group"></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-control" type="text" name="username" required placeholder="admin"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-control" type="password" name="password" required placeholder="••••••••"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">RTSP URL</label>
+          <input class="form-control" type="text" name="rtspUrl" required
+                 placeholder="rtsp://admin:pass@192.168.1.100:554/stream1"/>
+          <div class="form-hint">Will be auto-built from IP/port/credentials on save if left blank.</div>
+        </div>
+
+        <!-- Required safety gear checkboxes -->
+        <div class="form-group">
+          <label class="form-label">Required safety gear</label>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);cursor:pointer;">
+              <input type="checkbox" name="gear" value="HARD_HAT" style="accent-color:var(--accent);"/>
+              Hard hat
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);cursor:pointer;">
+              <input type="checkbox" name="gear" value="SAFETY_VEST" style="accent-color:var(--accent);"/>
+              Safety vest
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);cursor:pointer;">
+              <input type="checkbox" name="gear" value="GLOVES" style="accent-color:var(--accent);"/>
+              Gloves
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);cursor:pointer;">
+              <input type="checkbox" name="gear" value="SAFETY_GLASSES" style="accent-color:var(--accent);"/>
+              Safety glasses
+            </label>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div style="display:flex;gap:32px;margin-bottom:24px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);">
+            <input type="checkbox" id="active-toggle" checked style="accent-color:var(--accent);"/>
+            Camera active
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);">
+            <input type="checkbox" id="recording-toggle" style="accent-color:var(--accent);"/>
+            Enable recording
+          </label>
+        </div>
+
+        <div style="display:flex;gap:12px;">
+          <button type="submit" class="btn btn-primary">Save camera</button>
+          <a href="/ui/cameras" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

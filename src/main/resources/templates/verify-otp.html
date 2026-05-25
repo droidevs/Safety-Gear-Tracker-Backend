@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify OTP — Safety Gear Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">⬛ SGT</div>
+    <div class="auth-tagline">Account verification</div>
+    <h1 class="auth-title">Enter your OTP</h1>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;">
+      A 6-digit code was sent to your email address. Enter it below to activate your account.
+    </p>
+    <div id="otp-error" class="flash flash-error" style="display:none"></div>
+    <form id="otp-form">
+      <div class="form-group">
+        <label class="form-label">One-time password</label>
+        <input class="form-control" type="text" name="otp" maxlength="6" required
+               placeholder="123456" inputmode="numeric" style="letter-spacing:0.3em;text-align:center;font-size:22px;"/>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;margin-top:8px;">Verify account</button>
+    </form>
+    <div class="auth-footer" style="margin-top:16px;">
+      <button id="resend-otp" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;">
+        Resend OTP
+      </button>
+      &nbsp;·&nbsp;
+      <a href="/ui/login">Back to sign in</a>
+    </div>
+  </div>
+</div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

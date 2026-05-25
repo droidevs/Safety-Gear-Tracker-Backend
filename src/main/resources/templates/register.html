@@ -1,0 +1,44 @@
+<!-- ========================================================== -->
+<!-- register.html -->
+<!-- ========================================================== -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — Safety Gear Tracker</title>
+  <link rel="stylesheet" th:href="@{/templates/css/main.css}"/>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">⬛ SGT</div>
+    <div class="auth-tagline">Safety Gear Tracker</div>
+    <h1 class="auth-title">Create account</h1>
+    <div id="register-error" class="flash flash-error" style="display:none"></div>
+    <form id="register-form" autocomplete="on">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">First name</label>
+          <input class="form-control" type="text" name="firstname" required placeholder="Jane"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last name</label>
+          <input class="form-control" type="text" name="lastname" required placeholder="Doe"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" name="email" required placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-control" type="password" name="password" required placeholder="Min 8 chars" minlength="8"/>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center; margin-top:8px;">Create account</button>
+    </form>
+    <div class="auth-footer">Already have an account? <a href="/ui/login">Sign in</a></div>
+  </div>
+</div>
+<script th:src="@{/templates/js/main.js}"></script>
+</body>
+</html>

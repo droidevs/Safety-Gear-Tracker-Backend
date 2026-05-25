@@ -1,0 +1,72 @@
+<!-- ========================================================== -->
+<!-- cameras/index.html — camera list -->
+<!-- ========================================================== -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cameras — Safety Gear Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="layout">
+  <header class="topbar">
+    <a href="/ui/dashboard" class="topbar-brand">SGT <span>// Cameras</span></a>
+    <div class="topbar-spacer"></div>
+    <a href="#" id="logout-btn" class="btn-logout">Sign out</a>
+  </header>
+  <nav class="sidebar">
+    <div class="nav-section">
+      <a href="/ui/dashboard" class="nav-link"><span class="nav-icon">⬛</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Monitoring</div>
+      <a href="/ui/cameras"    class="nav-link active"><span class="nav-icon">📷</span> Cameras</a>
+      <a href="/ui/alerts"     class="nav-link"><span class="nav-icon">🚨</span> Alerts</a>
+      <a href="/ui/recordings" class="nav-link"><span class="nav-icon">🎬</span> Recordings</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Management</div>
+      <a href="/ui/zones" class="nav-link"><span class="nav-icon">🗺</span> Zones</a>
+      <a href="/ui/users" class="nav-link"><span class="nav-icon">👤</span> Users</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <a href="/ui/profile"      class="nav-link"><span class="nav-icon">⚙</span> My Profile</a>
+      <a href="/ui/weekly-code"  class="nav-link"><span class="nav-icon">🔑</span> Weekly Code</a>
+    </div>
+  </nav>
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Cameras</h1>
+      <span class="page-subtitle">RTSP / Hikvision endpoints</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-spacer"></div>
+      <a href="/ui/cameras/add" class="btn btn-primary">+ Add camera</a>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Zone</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody id="cameras-tbody">
+          <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-hint)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

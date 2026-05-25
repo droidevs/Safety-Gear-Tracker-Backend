@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${title} + ' — Safety Gear Tracker'">Safety Gear Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="layout">
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <a href="/ui/dashboard" class="topbar-brand">SGT <span>// Safety Gear Tracker</span></a>
+        <div class="topbar-spacer"></div>
+        <span class="topbar-user">
+      Logged in as <strong th:text="${#authentication?.name ?: 'unknown'}">user</strong>
+    </span>
+        <a href="#" id="logout-btn" class="btn-logout">Sign out</a>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="nav-section">
+            <div class="nav-label">Overview</div>
+            <a href="/ui/dashboard" class="nav-link">
+                <span class="nav-icon">⬛</span> Dashboard
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Monitoring</div>
+            <a href="/ui/cameras" class="nav-link">
+                <span class="nav-icon">📷</span> Cameras
+            </a>
+            <a href="/ui/alerts" class="nav-link">
+                <span class="nav-icon">🚨</span> Alerts
+            </a>
+            <a href="/ui/recordings" class="nav-link">
+                <span class="nav-icon">🎬</span> Recordings
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Management</div>
+            <a href="/ui/zones" class="nav-link">
+                <span class="nav-icon">🗺</span> Zones
+            </a>
+            <a href="/ui/users" class="nav-link">
+                <span class="nav-icon">👤</span> Users
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Account</div>
+            <a href="/ui/profile" class="nav-link">
+                <span class="nav-icon">⚙</span> My Profile
+            </a>
+            <a href="/ui/weekly-code" class="nav-link">
+                <span class="nav-icon">🔑</span> Weekly Code
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main">
+        <th:block th:replace="${content}"/>
+    </main>
+
+</div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
