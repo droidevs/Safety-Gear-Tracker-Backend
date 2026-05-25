@@ -1,6 +1,7 @@
 package com.droidevs.safety_gear_tracker.auth.token;
 
 import com.droidevs.safety_gear_tracker.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +25,9 @@ public class WeeklyCode {
     private LocalDateTime expiresAt;
     private LocalDateTime validatedAt;
 
+    // BUG-11 fix
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 }

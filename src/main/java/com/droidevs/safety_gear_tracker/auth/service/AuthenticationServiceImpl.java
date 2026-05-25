@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -248,7 +249,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private String generateAndSaveActivationOtp(User user) {
-        otpRepository.findByUser(user).ifPresent(otpRepository::delete); // Invalidate existing OTP
+        List<Otp> existingOtps = otpRepository.findByUser(user); // BUG-16 fix (usage)
+       if (!existingOtps.isEmpty()) {
+           otpRepository.deleteAll(existingOtps);
+       }
         String generatedOtp = generateActivationCode(6);
         Otp otp = Otp.builder()
                 .otp(generatedOtp)
