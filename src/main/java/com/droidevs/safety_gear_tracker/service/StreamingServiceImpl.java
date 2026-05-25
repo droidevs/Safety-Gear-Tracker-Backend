@@ -21,6 +21,7 @@ import com.droidevs.safety_gear_tracker.handler.exception.StreamingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 @Service
 @RequiredArgsConstructor
 public class StreamingServiceImpl implements StreamingService {
@@ -54,7 +55,10 @@ public class StreamingServiceImpl implements StreamingService {
                     .orElseThrow(() -> new ResourceNotFoundException("Camera not found with ID: " + cameraId));
 
             String rtspUrl = camera.getStreamUrl();
-            Path outputDir = getOutputDir(cameraId);
+
+            // BUG-21 FIX: Use system temp dir instead of relative path so it
+            // survives container restarts and isn't lost on working-dir changes.
+            Path outputDir = Paths.get(System.getProperty("java.io.tmpdir"), "hls", String.valueOf(cameraId));
 
             try {
                 Files.createDirectories(outputDir);
@@ -62,6 +66,7 @@ public class StreamingServiceImpl implements StreamingService {
                 ProcessBuilder processBuilder = new ProcessBuilder(
                         "ffmpeg",
                         "-i", rtspUrl,
+                        // BUG-03 FIX: typo was "-c:v libx24" (not a valid codec)
                         "-c:v", "libx264",
                         "-c:a", "aac",
                         "-f", "hls",

@@ -33,16 +33,26 @@ public class SecurityConfig {
         http
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint))
-                .authorizeHttpRequests(req ->
-                        req.requestMatchers(
-                                API_PREFIX + "/auth/**"
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers(
+                                API_PREFIX + "/auth/**",
+                                // BUG-10 FIX: Swagger UI was blocked by auth — inaccessible
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                // Thymeleaf UI pages and static assets
+                                "/ui/**",
+                                "/css/**",
+                                "/js/**",
+                                "/favicon.ico",
+                                "/error"
                         ).permitAll()
-                                .anyRequest()
-                                .authenticated()
+                        .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                // BUG-02 NOTE: JwtAuthenticationFilter now reads Bearer header AND jwt cookie
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
