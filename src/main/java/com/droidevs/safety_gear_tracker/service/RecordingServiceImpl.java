@@ -47,7 +47,7 @@ public class RecordingServiceImpl implements RecordingService {
     private final S3Service s3Service;
     private final RecordingRepository recordingRepository;
     private final RecordingMapper recordingMapper;
-    private final Executor recordingExecutor;
+    private final Executor taskExecutor; // Inject Spring's TaskExecutor
 
     @Value("${recording.duration.minutes:10}")
     private int recordingDurationMinutes;
@@ -61,14 +61,12 @@ public class RecordingServiceImpl implements RecordingService {
     public RecordingServiceImpl(
             CameraRepository cameraRepository,
             S3Service s3Service,
-            RecordingRepository recordingRepository,
-            RecordingMapper recordingMapper,
-            @Qualifier("recordingExecutor") Executor recordingExecutor) {
+            RecordingRepository recordingRepository, RecordingMapper recordingMapper, @Qualifier("taskExecutor") Executor taskExecutor) {
         this.cameraRepository = cameraRepository;
         this.s3Service = s3Service;
         this.recordingRepository = recordingRepository;
         this.recordingMapper = recordingMapper;
-        this.recordingExecutor = recordingExecutor;
+        this.taskExecutor = taskExecutor;
     }
 
     @PostConstruct
@@ -99,17 +97,12 @@ public class RecordingServiceImpl implements RecordingService {
         if (!camera.isActive() || !camera.isRecordingActive() || activeRecordings.containsKey(camera.getId())) {
             return;
         }
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                runRecordingLoop(camera);
-            } catch (Exception e) {
-                System.err.println("Unexpected error in recording loop for camera " + camera.getId() + ": " + e.getMessage());
-            }
-        }, recordingExecutor);
+        CompletableFuture<Void> future = startRecordingAsync(camera);
         activeRecordings.put(camera.getId(), future);
     }
 
-    private void runRecordingLoop(Camera camera) {
+    @Async("taskExecutor")
+    public CompletableFuture<Void> startRecordingAsync(Camera camera) {
         try {
             while (cameraRepository.findById(camera.getId()).map(c -> c.isActive() && c.isRecordingActive()).orElse(false)) {
                 LocalDateTime now = LocalDateTime.now();
@@ -136,7 +129,7 @@ public class RecordingServiceImpl implements RecordingService {
                     exitCode = process.waitFor();
                 } catch (VideoRecordingException e) {
                     System.err.println("FFmpeg recording failed for camera " + camera.getId() + ": " + e.getMessage());
-                    throw e; 
+                    throw e;
                 } finally {
                     activeFFmpegProcesses.remove(camera.getId());
                     System.out.println("FFmpeg for camera " + camera.getId() + " exited with code: " + exitCode);
@@ -169,13 +162,14 @@ public class RecordingServiceImpl implements RecordingService {
         } catch (S3OperationException e) {
             throw new S3OperationException("S3 operation failed during recording for camera " + camera.getId(), e);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); 
+            Thread.currentThread().interrupt();
             throw new VideoRecordingException("Recording for camera " + camera.getId() + " was interrupted.", e);
-        } catch (Exception e) { 
+        } catch (Exception e) {
             throw new VideoRecordingException("An unexpected error occurred during recording for camera " + camera.getId(), e);
         } finally {
             activeRecordings.remove(camera.getId());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     private Process startFFmpegRecording(String rtspUrl, String outputPath, int durationMinutes) throws VideoRecordingException {
@@ -193,9 +187,22 @@ public class RecordingServiceImpl implements RecordingService {
                     "-y",
                     outputPath
             );
-            builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-            builder.redirectError(ProcessBuilder.Redirect.DISCARD);
+            builder.redirectErrorStream(true);
             Process process = builder.start();
+
+            // Use the managed taskExecutor to consume the stream
+            taskExecutor.execute(() -> {
+                try (InputStream is = process.getInputStream()) {
+                    byte[] buffer = new byte[1024];
+                    while (is.read(buffer) != -1) {
+                        // Consume the stream but don't print to avoid excessive logging
+                    }
+                } catch (IOException e) {
+                    // This will be caught by our CustomTaskErrorHandler
+                    throw new RuntimeException("Error reading FFmpeg output: " + e.getMessage(), e);
+                }
+            });
+
             return process;
         } catch (IOException e) {
             throw new VideoRecordingException("Failed to start FFmpeg process for RTSP stream: " + rtspUrl, e);
