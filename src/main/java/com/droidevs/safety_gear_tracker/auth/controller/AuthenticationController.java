@@ -1,6 +1,4 @@
-
 package com.droidevs.safety_gear_tracker.auth.controller;
-
 
 import com.droidevs.safety_gear_tracker.auth.dtos.*;
 import com.droidevs.safety_gear_tracker.handler.exception.UserNotFoundException;
@@ -21,21 +19,20 @@ import java.time.Duration;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@Tag(name= "Authentication")
+@Tag(name = "Authentication")
 public class AuthenticationController {
 
     private final AuthenticationService service;
     private final WeeklyCodeService weeklyCodeService;
 
-
     @GetMapping("is_authenticated")
-    public ResponseEntity<Boolean> isAuthenticated(@AuthenticationPrincipal String email){
+    public ResponseEntity<Boolean> isAuthenticated(@AuthenticationPrincipal String email) {
         return ResponseEntity.ok(email != null);
     }
 
     @GetMapping("is_verified")
-    public ResponseEntity<Boolean> isVerified(@AuthenticationPrincipal String email){
-        if (email == null){
+    public ResponseEntity<Boolean> isVerified(@AuthenticationPrincipal String email) {
+        if (email == null) {
             throw new UserNotFoundException();
         }
         return ResponseEntity.ok(service.isUserVerified(email));
@@ -43,15 +40,13 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody @Valid RegisterRequest request
-    ) throws MessagingException {
+            @RequestBody @Valid RegisterRequest request) throws MessagingException {
         return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
-            @RequestBody AuthenticationRequest request
-    ){
+            @RequestBody AuthenticationRequest request) {
         AuthenticationResponse response = service.authenticate(request);
         ResponseCookie cookie = ResponseCookie.from("jwt", response.token())
                 .httpOnly(true)
@@ -59,14 +54,14 @@ public class AuthenticationController {
                 .maxAge(Duration.ofDays(1))
                 .sameSite("Strict")
                 .build();
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(response);
     }
-    
+
     @PostMapping("/refresh-token")
-    public ResponseEntity<AuthenticationResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request) {
+    public ResponseEntity<AuthenticationResponse> refreshToken(
+            @RequestBody @Valid RefreshTokenRequest request) {
         return ResponseEntity.ok(service.refreshToken(request));
     }
 
@@ -79,28 +74,24 @@ public class AuthenticationController {
         return ResponseEntity.ok("Logged out successfully");
     }
 
-
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendVerifyOtp(
-            @RequestBody @Valid SendOtpRequest request
-    ) throws MessagingException {
+            @RequestBody @Valid SendOtpRequest request) throws MessagingException {
         service.sendOtp(request.email());
         return ResponseEntity.ok("Verification code sent");
     }
-    
+
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyUser(
-            @RequestBody @Valid EmailVerificationRequest verifyUserRequest
-    ) throws MessagingException {
+            @RequestBody @Valid EmailVerificationRequest verifyUserRequest) throws MessagingException {
         service.verifyUser(verifyUserRequest.email(), verifyUserRequest.otp());
         return ResponseEntity.ok("Account verified successfully");
     }
-    
+
     @PostMapping("/validate-weekly-code")
     public ResponseEntity<?> validateWeeklyCode(
             @RequestBody @Valid DailyCodeValidationRequest request,
-            @AuthenticationPrincipal String email
-    ) {
+            @AuthenticationPrincipal String email) {
         if (email == null) {
             throw new UserNotFoundException("User not authenticated");
         }
@@ -109,23 +100,33 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) throws MessagingException {
+    public ResponseEntity<?> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request) throws MessagingException {
         service.forgotPassword(request);
         return ResponseEntity.ok("Password reset OTP sent to your email");
     }
-    
+
+    /**
+     * BUG-18 FIX: method previously returned {@code void}, which is inconsistent
+     * with every other endpoint and prevents the caller from distinguishing a
+     * 200 OK from a 4xx/5xx.  Now returns {@link ResponseEntity} so the
+     * framework can serialize errors correctly and clients can inspect status.
+     */
     @PostMapping("/change-password")
-    public void changePassword(
+    public ResponseEntity<?> changePassword(
             @RequestBody @Valid ResetPasswordRequest request,
-            @AuthenticationPrincipal String email
-    ){
+            @AuthenticationPrincipal String email) {
         service.changePassword(request, email);
+        return ResponseEntity.ok("Password changed successfully");
     }
 
+    /**
+     * BUG-19 FIX: same issue as BUG-18 — void return replaced with ResponseEntity.
+     */
     @PostMapping("/reset-password-otp")
-    public void resetPassword(
-            @RequestBody @Valid ResetPasswordOtpRequest request
-    ){
+    public ResponseEntity<?> resetPassword(
+            @RequestBody @Valid ResetPasswordOtpRequest request) {
         service.resetPasswordOtp(request);
+        return ResponseEntity.ok("Password reset successfully");
     }
 }

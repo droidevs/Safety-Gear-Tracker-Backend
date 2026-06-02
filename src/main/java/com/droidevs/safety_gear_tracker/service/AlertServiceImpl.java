@@ -4,6 +4,7 @@ import com.droidevs.safety_gear_tracker.dto.AlertRequestDto;
 import com.droidevs.safety_gear_tracker.dto.AlertResponseDto;
 import com.droidevs.safety_gear_tracker.dto.AlertSummaryResponseDto;
 import com.droidevs.safety_gear_tracker.handler.exception.ResourceNotFoundException;
+import com.droidevs.safety_gear_tracker.handler.exception.S3OperationException;
 import com.droidevs.safety_gear_tracker.mappers.AlertMapper;
 import com.droidevs.safety_gear_tracker.model.Alert;
 import com.droidevs.safety_gear_tracker.model.Camera;
@@ -39,31 +40,41 @@ public class AlertServiceImpl implements AlertService {
     private final S3Service s3Service;
     private final CameraRepository cameraRepository;
     private final RecordingRepository recordingRepository;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private static final DateTimeFormatter DATE_FORMATTER      = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss");
 
     @Override
     @Transactional
     public AlertResponseDto createAlert(AlertRequestDto alertRequestDto) {
         Camera camera = cameraRepository.findById(alertRequestDto.cameraId())
-                .orElseThrow(() -> new ResourceNotFoundException("Camera not found with id: " + alertRequestDto.cameraId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Camera not found with id: " + alertRequestDto.cameraId()));
 
         String screenshotKey = null;
         if (alertRequestDto.screenshot() != null && !alertRequestDto.screenshot().isEmpty()) {
             try {
-                LocalDateTime now = LocalDateTime.now();
-                String dateFolder = now.format(DATE_FORMATTER);
-                String timestampFile = now.format(TIMESTAMP_FORMATTER) + ".jpg";
-                screenshotKey = String.format("camera_screenshots/%s/%s/%s", camera.getId(), dateFolder, timestampFile);
+                LocalDateTime now       = LocalDateTime.now();
+                String dateFolder       = now.format(DATE_FORMATTER);
+                String timestampFile    = now.format(TIMESTAMP_FORMATTER) + ".jpg";
+                screenshotKey = String.format("camera_screenshots/%s/%s/%s",
+                        camera.getId(), dateFolder, timestampFile);
+
+                // BUG-12 FIX: original code caught IOException and rethrew it as a
+                // bare RuntimeException, bypassing the GlobalExceptionHandler.
+                // Now we throw the typed S3OperationException so the handler can
+                // return the correct HTTP 500 + business error code response.
                 s3Service.uploadFile(screenshotKey, alertRequestDto.screenshot().getInputStream());
+
             } catch (IOException e) {
-                // This will be handled by the GlobalExceptionHandler
-                throw new RuntimeException("Error uploading screenshot", e);
+                throw new S3OperationException(
+                        "Failed to read screenshot input stream for camera " + camera.getId(), e);
             }
         }
 
         LocalDateTime alertTimestamp = LocalDateTime.now();
-        Optional<Recording> latestRecording = recordingRepository.findLastRecordingBeforeTimestamp(camera.getId(), alertTimestamp);
+        Optional<Recording> latestRecording =
+                recordingRepository.findLastRecordingBeforeTimestamp(camera.getId(), alertTimestamp);
 
         Alert alert = new Alert();
         alert.setCamera(camera);
@@ -81,7 +92,6 @@ public class AlertServiceImpl implements AlertService {
     public Page<AlertSummaryResponseDto> getAllAlerts(int page, int size) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Long> cameraIds = getAccessibleCameraIds(user);
-
         Page<Alert> alertPage = alertRepository.findByCameraIdIn(cameraIds, PageRequest.of(page, size));
         return alertPage.map(alertMapper::toSummaryDto);
     }
@@ -90,7 +100,6 @@ public class AlertServiceImpl implements AlertService {
     public Optional<AlertResponseDto> getAlertById(Long id) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Set<Long> accessibleCameraIds = getAccessibleCameraIdsAsSet(user);
-
         return alertRepository.findById(id)
                 .filter(alert -> accessibleCameraIds.contains(alert.getCamera().getId()))
                 .map(alertMapper::toDto);
@@ -99,39 +108,35 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public byte[] getAlertScreenshot(Long id) {
         Alert alert = getAndVerifyAlertAccess(id);
-        if (alert.getScreenshotUrl() == null) {
-            return null;
-        }
+        if (alert.getScreenshotUrl() == null) return null;
         return s3Service.downloadFile(alert.getScreenshotUrl());
     }
 
     @Override
     public InputStreamResource getAlertScreenshotStream(Long id) {
         Alert alert = getAndVerifyAlertAccess(id);
-        if (alert.getScreenshotUrl() == null) {
-            return null;
-        }
-        ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(alert.getScreenshotUrl());
+        if (alert.getScreenshotUrl() == null) return null;
+        ResponseInputStream<GetObjectResponse> s3Object =
+                s3Service.downloadFileAsStream(alert.getScreenshotUrl());
         return new InputStreamResource(s3Object);
     }
 
     @Override
     public InputStreamResource getAlertRecordingStream(Long id) {
         Alert alert = getAndVerifyAlertAccess(id);
-        if (alert.getRecording() == null || alert.getRecording().getFilePath() == null) {
-            return null;
-        }
-        ResponseInputStream<GetObjectResponse> s3Object = s3Service.downloadFileAsStream(alert.getRecording().getFilePath());
+        if (alert.getRecording() == null || alert.getRecording().getFilePath() == null) return null;
+        ResponseInputStream<GetObjectResponse> s3Object =
+                s3Service.downloadFileAsStream(alert.getRecording().getFilePath());
         return new InputStreamResource(s3Object);
     }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
 
     private Alert getAndVerifyAlertAccess(Long alertId) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Set<Long> accessibleCameraIds = getAccessibleCameraIdsAsSet(user);
-
         Alert alert = alertRepository.findById(alertId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alert not found with ID: " + alertId));
-
         if (!accessibleCameraIds.contains(alert.getCamera().getId())) {
             throw new ResourceNotFoundException("Alert not found with ID: " + alertId);
         }
@@ -144,7 +149,7 @@ public class AlertServiceImpl implements AlertService {
                 .map(Camera::getId)
                 .collect(Collectors.toList());
     }
-    
+
     private Set<Long> getAccessibleCameraIdsAsSet(User user) {
         return user.getZones().stream()
                 .flatMap(zone -> zone.getCameras().stream())

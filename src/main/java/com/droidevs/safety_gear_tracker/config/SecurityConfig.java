@@ -22,6 +22,16 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    // BUG-14 FIX: WebConfig adds the "/api/v1" prefix to every @RestController,
+    // so all camera / zone / alert / user endpoints are actually served under
+    // /api/v1/cameras, /api/v1/zones, etc.
+    // The previous config only whitelisted /api/v1/auth/** and left
+    // /api/v1/cameras/** etc. requiring authentication — which is correct —
+    // but the JWT filter also needs to intercept /api/v1/** (not just the
+    // root-level paths that appear in the controller @RequestMapping values).
+    // Spring Security matches the *actual* request URI, which already carries
+    // the prefix by the time it reaches the filter chain, so the rules below
+    // simply reference the full prefixed paths consistently.
     public static final String API_PREFIX = "/api/v1";
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -36,23 +46,29 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(req -> req
                         .requestMatchers(
+                                // Auth endpoints — public
                                 API_PREFIX + "/auth/**",
-                                // BUG-10 FIX: Swagger UI was blocked by auth — inaccessible
+                                // Swagger UI
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                // Thymeleaf UI pages and static assets
+                                // Thymeleaf UI pages & static assets
                                 "/ui/**",
                                 "/css/**",
                                 "/js/**",
                                 "/favicon.ico",
                                 "/error"
                         ).permitAll()
+                        // BUG-14 FIX: every other /api/v1/** route requires authentication.
+                        // Because WebConfig prefixes all @RestControllers with /api/v1,
+                        // the rule below covers /api/v1/cameras/**, /api/v1/zones/**,
+                        // /api/v1/users/**, /api/v1/alerts/**, /api/v1/recordings/**,
+                        // /api/v1/stream/**, etc. — no separate per-resource rules needed.
+                        .requestMatchers(API_PREFIX + "/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                // BUG-02 NOTE: JwtAuthenticationFilter now reads Bearer header AND jwt cookie
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
